@@ -16,24 +16,22 @@ export class UserManager {
     }
 
     public initHandlers(socket: Socket) : void {
-        socket.on("offer", (sdp: string, roomId: string) => {
+        socket.on("offer", ({sdp, roomId} : {sdp: RTCSessionDescriptionInit, roomId: string}) => {
             this.roomManager.onOffer(roomId, sdp, socket.id);
         })
 
-        socket.on("answer", (sdp: string, roomId: string) => {
+        socket.on("answer", ({sdp, roomId} : {sdp: RTCSessionDescriptionInit, roomId: string}) => {
             this.roomManager.onAnswer(roomId, sdp, socket.id);
         });
 
-        socket.on("add-ice-candidate", (candidate: any, type: "sender" | "receiver", roomId: string) => {
+        socket.on("add-ice-candidate", ({candidate, type, roomId} : {candidate: any, type: "sender" | "receiver", roomId: string}) => {
             this.roomManager.onIceCandidate(roomId, socket.id, candidate, type);
         });
     }
 
 
     public joinRoom(roomId: string, userName: string, socket: Socket) : void {
-        console.log("HERE");
         this.users.push({socket, userName});
-        console.log("UPDATED USERS", this.users);
         this.roomManager.addUserToRoom(roomId, {socket, userName});
         this.initHandlers(socket);
     }

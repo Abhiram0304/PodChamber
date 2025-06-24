@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
-import { setLocalAudioTrack, setLocalVideoTrack, setRoomIdFn, setUserNameFn } from "../reducers/slices/appSlice";
+import { setRoomIdFn, setUserNameFn } from "../reducers/slices/appSlice";
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {
@@ -15,9 +15,9 @@ const Home = () => {
     const getMedia = async () => {
         const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
         const videoTrack = stream.getVideoTracks()[0];
-        const audioTrack = stream.getAudioTracks()[0];
-        dispatch(setLocalAudioTrack(audioTrack));
-        dispatch(setLocalVideoTrack(videoTrack));
+        // const audioTrack = stream.getAudioTracks()[0];
+        // dispatch(setLocalAudioTrack(audioTrack));
+        // dispatch(setLocalVideoTrack(videoTrack));
 
         if(!videoRef.current) return;
 

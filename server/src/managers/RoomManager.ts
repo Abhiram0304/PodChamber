@@ -12,21 +12,17 @@ export class RoomManager {
     }
 
     public addUserToRoom(roomId: string, user: User): void {
-        console.log("CALLED");
-        if(!this.rooms.has(roomId)){
-            this.rooms.set(roomId, {users: [user]});
-        }else{
-            const room = this.rooms.get(roomId);
-            console.log("Room", room);
-            if(room && room.users.length < 2){
-                console.log("USER PUSHED", room, room.users);
-                room.users.push(user);
-            }
-        }
+        if(!this.rooms.has(roomId)) this.rooms.set(roomId, {users: []});
+        const room = this.rooms.get(roomId);
+        if(room?.users.length === 2) return;
 
-        console.log("ROOM JOINED", this.rooms);
-        user.socket.join(roomId);
-        user.socket.emit("room-joined", {roomId});
+        room?.users.push(user);
+        if(room?.users.length === 2){
+            const firstUser = room.users[0];
+            const secondUser = room.users[1];
+            firstUser.socket.emit("send-offer", { roomId });
+            secondUser.socket.emit("send-offer", { roomId });
+        }
     }
 
     public removeUserFromRooms(socketId: string): void {
@@ -44,22 +40,20 @@ export class RoomManager {
         return room?.users.find(user => user.socket.id !== senderSocketId);
     }
 
-    public onOffer(roomId: string, sdp: string, senderSocketId: string): void {
+    public onOffer(roomId: string, sdp: RTCSessionDescriptionInit, senderSocketId: string): void {
         const room = this.rooms.get(roomId);
-
         if(!room) return;
 
         const receiverUser = this.getOtherUser(roomId, senderSocketId);
-        receiverUser?.socket.emit("offer", {sdp, roomId});
+        receiverUser?.socket.emit("offer", {remoteSdp: sdp, roomId});
     }
 
-    public onAnswer(roomId: string, sdp: string, senderSocketId: string): void {
+    public onAnswer(roomId: string, sdp: RTCSessionDescriptionInit, senderSocketId: string): void {
         const room = this.rooms.get(roomId);
-
         if(!room) return;
 
         const receiverUser = this.getOtherUser(roomId, senderSocketId);
-        receiverUser?.socket.emit("answer", {sdp, roomId});
+        receiverUser?.socket.emit("answer", {remoteSdp: sdp, roomId});
     }
 
     public onIceCandidate(roomId: string, senderSocketId: string, candidate: any, type: "sender" | "receiver"): void {
