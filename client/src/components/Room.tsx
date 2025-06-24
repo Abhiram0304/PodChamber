@@ -38,7 +38,8 @@ const Room = () => {
     }, []);
 
     useEffect(() => {
-        const socket: Socket = io("http://localhost:3000");
+        // const socket: Socket = io("http://localhost:3000");
+        const socket: Socket = io("https://podchamber.onrender.com");
 
         socket.emit("join-room", {roomId, userName});
         
