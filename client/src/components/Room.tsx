@@ -246,6 +246,7 @@ const Room = () => {
                     )}
                 </div>
             </div>
+            <div className="w-full text-center text-white font-semibold">Made by Abhiram T</div>
         </div>
     )
 }
