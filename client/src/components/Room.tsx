@@ -2,6 +2,8 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../reducers";
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
+import createMediaRecorder from "../utilities/MediaRecorder";
+import type { RecorderType } from "../types";
 
 const Room = () => {
 
@@ -12,6 +14,8 @@ const Room = () => {
     const [_socket, setSocket] = useState<Socket | null>(null)
     const [_senderPc, setSenderPc] = useState<null | RTCPeerConnection>(null)    
     const [_receiverPc, setReceiverPc] = useState<null | RTCPeerConnection>(null)
+    const [recordingOn, setRecordingOn] = useState<boolean>(false);
+    const [recorder, setRecorder] = useState<null | RecorderType>(null);
     const localVideoTrackRef = useRef<MediaStreamTrack | null>(null);
     const localAudioTrackRef = useRef<MediaStreamTrack | null>(null);
     // const [remoteVideoTrack, setRemoteVideoTrack] = useState<null | MediaStreamTrack>(null) 
@@ -27,6 +31,22 @@ const Room = () => {
         localAudioTrackRef.current = audioTrack;
         localVideoTrackRef.current = videoTrack;
 
+        const recorder = createMediaRecorder(stream, async (blob) => {
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const fileName = `recording-chunk-${timestamp}.webm`;
+            console.log("FOLENAME", fileName);
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+
+            // Optional: revoke the URL after some time to release memory
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        });
+        setRecorder(recorder);
+
         if(!localVideoRef.current) return;
 
         localVideoRef.current.srcObject = new MediaStream([videoTrack]);
@@ -38,8 +58,8 @@ const Room = () => {
     }, []);
 
     useEffect(() => {
-        // const socket: Socket = io("http://localhost:3000");
-        const socket: Socket = io("https://podchamber.onrender.com");
+        const socket: Socket = io("http://localhost:3000");
+        // const socket: Socket = io("https://podchamber.onrender.com");
 
         socket.emit("join-room", {roomId, userName});
         
@@ -168,16 +188,45 @@ const Room = () => {
         
         return () => {
             socket.disconnect();
+            if(recordingOn){
+                recorder?.stop();
+                setRecordingOn(false);
+            }
         };
         
     }, [userName, roomId]);
 
+    const recordingHandler = () => {
+        if(recordingOn){
+            recorder?.stop();
+            setRecordingOn(false);
+        }else{
+            recorder?.start();
+            setRecordingOn(true);
+        }
+    }
+
 
     return (
         <div className="w-[100vw] h-[100vh] bg-[rgb(0,0,0)] text-white flex flex-col items-center gap-[2rem]">
-            <div className="w-full flex justify-between items-center gap-[2rem] p-[2rem]">
-                <p>HELLO: {userName}</p>
-                <p>Room: {roomId}</p>
+            <div className="w-full flex justify-between items-center text-lg font-medium p-[1.5rem]">
+                <p>👋 Hello, <span className="font-semibold text-blue-400">{userName}</span></p>
+                <p>🛋 Room: <span className="font-semibold text-green-400">{roomId}</span></p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <p className={`font-bold ${recordingOn ? "text-red-500" : "text-gray-400"}`}>🎙 Recording: {recordingOn ? "ON" : "OFF"}</p>
+
+                <button
+                    onClick={recordingHandler}
+                    className={`px-6 py-2 rounded-xl font-semibold transition duration-300 ${
+                        recordingOn
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-green-600 hover:bg-green-700"
+                    }`}
+                >
+                    {recordingOn ? "⏹ Stop Recording" : "⏺ Start Recording"}
+                </button>
             </div>
 
             <div className="flex gap-4">
