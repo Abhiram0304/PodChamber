@@ -4,12 +4,14 @@ import Room from './components/Room'
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/room" element={<Room />} />
-      </Routes>
-    </BrowserRouter>
+    <div className='bg-gray-900 text-white min-h-screen flex flex-col max-w-screen overflow-x-hidden'>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/room" element={<Room />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
   )
 }
 
