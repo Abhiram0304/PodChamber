@@ -45,7 +45,7 @@ const Home = () => {
         </div>
 
         <div className="flex md:flex-row flex-col justify-center items-center gap-[3rem]">
-            <video className="h-[40%]" autoPlay ref={videoRef} muted />
+            <video className="sm:w-[35%] w-[80%] rounded-[1rem]" autoPlay ref={videoRef} muted />
 
             <div className="w-full flex flex-col justify-center items-center gap-[1rem]">
                 <p className="text-[#adb5bd] font-semibold text-[22px] text-center">Join a pod cell and start your journey now !</p>

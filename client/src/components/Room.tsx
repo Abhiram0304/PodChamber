@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import createMediaRecorder from "../utilities/MediaRecorder";
 import type { RecorderType } from "../types";
+import { BsMic, BsMicMute, BsCameraVideo, BsCameraVideoOff } from 'react-icons/bs';
 
 const Room = () => {
 
@@ -23,6 +24,17 @@ const Room = () => {
     // const [remoteMediaStream, setRemoteMediaStream] = useState<null | MediaStream>(null)    
     const remoteVideoRef = useRef<HTMLVideoElement | null>(null)
     const localVideoRef = useRef<HTMLVideoElement | null>(null)
+    const [audioMuted, setAudioMuted] = useState<boolean>(false);
+    const [videoMuted, setVideoMuted] = useState<boolean>(false);
+
+    useEffect(() => {
+        if(localVideoTrackRef.current){
+            localVideoTrackRef.current.enabled = !videoMuted;
+        }
+        if(localAudioTrackRef.current){
+            localAudioTrackRef.current.enabled = !audioMuted;
+        }
+    }, [audioMuted, videoMuted]);
 
     const getMedia = async () => {
         const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
@@ -208,44 +220,94 @@ const Room = () => {
 
 
     return (
-        <div className="w-[100vw] h-[100vh] bg-[rgb(0,0,0)] text-white flex flex-col items-center gap-[2rem]">
+        <div className="w-[100vw] h-[100vh] bg-black text-white flex flex-col items-center gap-[2rem]">
             <div className="w-full flex justify-between items-center text-lg font-medium p-[1.5rem]">
                 <p>👋 Hello, <span className="font-semibold text-blue-400">{userName}</span></p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <p className={`font-bold ${recordingOn ? "text-red-500" : "text-gray-400"}`}>🎙 Recording: {recordingOn ? "ON" : "OFF"}</p>
+
+                    <button
+                        onClick={recordingHandler}
+                        className={`px-6 py-2 rounded-xl font-semibold transition duration-300 ${
+                            recordingOn
+                            ? "bg-red-600 hover:bg-red-700"
+                            : "bg-green-600 hover:bg-green-700"
+                        }`}
+                    >
+                        {recordingOn ? "⏹ Stop Recording" : "⏺ Start Recording"}
+                    </button>
+                </div>
                 <p>🛋 Room: <span className="font-semibold text-green-400">{roomId}</span></p>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <p className={`font-bold ${recordingOn ? "text-red-500" : "text-gray-400"}`}>🎙 Recording: {recordingOn ? "ON" : "OFF"}</p>
+            
 
-                <button
-                    onClick={recordingHandler}
-                    className={`px-6 py-2 rounded-xl font-semibold transition duration-300 ${
-                        recordingOn
-                        ? "bg-red-600 hover:bg-red-700"
-                        : "bg-green-600 hover:bg-green-700"
-                    }`}
-                >
-                    {recordingOn ? "⏹ Stop Recording" : "⏺ Start Recording"}
-                </button>
-            </div>
-
-            <div className="flex gap-4">
-                <div className="flex flex-col items-center">
+            <div className="flex gap-4 sm:w-[60%] w-[90%] sm:flex-row flex-col items-center justify-center">
+                <div className="w-full flex flex-col items-center">
                     <p>Local Video (You)</p>
-                    <video autoPlay muted width={400} className="border-amber-50 border-2" ref={localVideoRef} />
+                    <video autoPlay muted className="border-amber-50 w-full border-2 rounded-[1rem]" ref={localVideoRef} />
                 </div>
                 
-                <div className="flex flex-col items-center">
+                <div className="w-full sm:h-full h-[300px] flex flex-col items-center">
                     <p>Remote Video (Other User)</p>
                     {lobby ? (
-                        <div className="w-[400px] h-[300px] border-amber-50 border-2 flex items-center justify-center">
+                        <div className="w-full h-full border-amber-50 border-2 flex rounded-[1rem] items-center justify-center">
                             <p>Waiting to connect you to someone</p>
                         </div>
                     ) : (
-                        <video autoPlay width={400} className="border-amber-50 border-2" ref={remoteVideoRef} />
+                        <video autoPlay className="border-amber-50 w-full border-2 rounded-[1rem]" ref={remoteVideoRef} />
                     )}
                 </div>
             </div>
+
+            <div className="flex items-center justify-center gap-4 py-[0.5rem] px-[1rem] rounded-[2rem] bg-gray-900">
+                <button
+                    onClick={() => setAudioMuted(!audioMuted)}
+                    className={`
+                        relative w-14 h-14 rounded-full flex items-center justify-center
+                        transition-all duration-200 ease-in-out transform hover:scale-105
+                        ${audioMuted 
+                            ? 'bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/30' 
+                            : 'bg-gray-700 hover:bg-gray-600 shadow-lg shadow-gray-700/30'
+                        }
+                    `}
+                    title={audioMuted ? 'Unmute' : 'Mute'}
+                >
+                    {audioMuted ? (
+                            <BsMicMute className="w-6 h-6 text-white" />
+                        ) : (
+                            <BsMic className="w-6 h-6 text-white" />
+                    )}
+                
+                    {audioMuted && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900"></div>
+                    )}
+                </button>
+
+                <button
+                    onClick={() => setVideoMuted(!videoMuted)}
+                    className={`
+                        relative w-14 h-14 rounded-full flex items-center justify-center
+                        transition-all duration-200 ease-in-out transform hover:scale-105
+                        ${videoMuted 
+                            ? 'bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/30' 
+                            : 'bg-gray-700 hover:bg-gray-600 shadow-lg shadow-gray-700/30'
+                        }
+                    `}
+                    title={videoMuted ? 'Turn on camera' : 'Turn off camera'}
+                >
+                    {videoMuted ? (
+                            <BsCameraVideoOff className="w-6 h-6 text-white" />
+                        ) : (
+                            <BsCameraVideo className="w-6 h-6 text-white" />
+                    )}
+                    
+                    {videoMuted && (
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900"></div>
+                    )}
+                </button>
+            </div>
+
             <div className="w-full text-center text-white font-semibold">Made by Abhiram T</div>
         </div>
     )
