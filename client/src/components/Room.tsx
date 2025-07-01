@@ -5,6 +5,7 @@ import { io, Socket } from "socket.io-client";
 import createMediaRecorder from "../utilities/MediaRecorder";
 import type { RecorderType } from "../types";
 import { BsMic, BsMicMute, BsCameraVideo, BsCameraVideoOff } from 'react-icons/bs';
+import { S3Uploader, type S3Config } from "../utilities/S3uploader";
 
 const Room = () => {
 
@@ -26,6 +27,8 @@ const Room = () => {
     const localVideoRef = useRef<HTMLVideoElement | null>(null)
     const [audioMuted, setAudioMuted] = useState<boolean>(false);
     const [videoMuted, setVideoMuted] = useState<boolean>(false);
+    // const [s3Uploader, setS3Uploader] = useState<S3Uploader | null>(null);
+    const s3UploaderRef = useRef<S3Uploader | null>(null);
 
     useEffect(() => {
         if(localVideoTrackRef.current){
@@ -43,20 +46,35 @@ const Room = () => {
         localAudioTrackRef.current = audioTrack;
         localVideoTrackRef.current = videoTrack;
 
-        const recorder = createMediaRecorder(stream, async (blob) => {
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const fileName = `recording-chunk-${timestamp}.webm`;
-            console.log("FOLENAME", fileName);
+        const recorder = createMediaRecorder(
+            stream, 
+            async (blob) => {
+                // This callback will still run for logging/monitoring
+                console.log(`Chunk received: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+                
+                // Local download as fallback (optional)
+                if (!s3UploaderRef.current) {
+                    console.log("LOCAL DOWNLOAD", s3UploaderRef.current);
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                    const fileName = `recording-chunk-${timestamp}.webm`;
+                    console.log("FILENAME", fileName);
 
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            a.click();
-
-            // Optional: revoke the URL after some time to release memory
-            setTimeout(() => URL.revokeObjectURL(url), 100);
-        });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    a.click();
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                }
+            },
+            10000, // 10 seconds
+            {
+                s3Uploader: s3UploaderRef.current,
+                roomId: roomId,
+                userName: userName,
+                enableLocalDownload: !s3UploaderRef.current // Download locally if S3 not available
+            }
+        );
         setRecorder(recorder);
 
         if(!localVideoRef.current) return;
@@ -65,9 +83,9 @@ const Room = () => {
         localVideoRef.current.play();
     }
 
-    useEffect(() => {
-        getMedia();
-    }, []);
+    // useEffect(() => {
+    //     // getMedia();
+    // }, []);
 
     useEffect(() => {
         const socket: Socket = io("http://localhost:3000");
@@ -218,13 +236,29 @@ const Room = () => {
         }
     }
 
+    useEffect(() => {
+        try {
+            const uploader = new S3Uploader('video-recordings/');
+            console.log("Uploaded", uploader);
+            s3UploaderRef.current = uploader;
+            console.log('S3 uploader initialized');
+            getMedia();
+        } catch (error) {
+            console.error('Failed to initialize S3 uploader:', error);
+            console.warn('S3 upload will be disabled. Check your environment variables.');
+        }
+    }, []);
+
 
     return (
         <div className="w-[100vw] h-[100vh] bg-black text-white flex flex-col items-center gap-[2rem]">
             <div className="w-full flex justify-between items-center text-lg font-medium p-[1.5rem]">
                 <p>👋 Hello, <span className="font-semibold text-blue-400">{userName}</span></p>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <p className={`font-bold ${recordingOn ? "text-red-500" : "text-gray-400"}`}>🎙 Recording: {recordingOn ? "ON" : "OFF"}</p>
+                    <p className={`font-bold ${recordingOn ? "text-red-500" : "text-gray-400"}`}>
+                        🎙 Recording: {recordingOn ? "ON" : "OFF"}
+                        {s3UploaderRef.current && recordingOn && <span className="text-green-400 ml-2">→ S3</span>}
+                    </p>
 
                     <button
                         onClick={recordingHandler}
@@ -236,6 +270,9 @@ const Room = () => {
                     >
                         {recordingOn ? "⏹ Stop Recording" : "⏺ Start Recording"}
                     </button>
+                </div>
+                <div className="text-sm text-gray-400">
+                    S3 Upload: {s3UploaderRef.current ? "✅ Ready" : "❌ Not configured"}
                 </div>
                 <p>🛋 Room: <span className="font-semibold text-green-400">{roomId}</span></p>
             </div>
