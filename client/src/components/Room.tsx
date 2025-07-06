@@ -5,7 +5,7 @@ import { io, Socket } from "socket.io-client";
 import createMediaRecorder from "../utilities/MediaRecorder";
 import type { RecorderType } from "../types";
 import { BsMic, BsMicMute, BsCameraVideo, BsCameraVideoOff } from 'react-icons/bs';
-import { S3Uploader, type S3Config } from "../utilities/S3uploader";
+import { S3Uploader } from "../utilities/S3uploader";
 
 const Room = () => {
 

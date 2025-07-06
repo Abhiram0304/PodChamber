@@ -75,7 +75,7 @@ export class S3Uploader {
         console.log(`📦 Uploading ${key} → ${percent}%`);
       });
 
-      const result = await upload.done();
+      await upload.done();
       const location = `https://${this.bucketName}.s3.${this.s3Client.config.region}.amazonaws.com/${key}`;
       console.log(`✅ Chunk ${chunkId} uploaded successfully:`, location);
       return location;
