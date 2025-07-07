@@ -27,6 +27,30 @@ export class UserManager {
         socket.on("add-ice-candidate", ({candidate, type, roomId} : {candidate: any, type: "sender" | "receiver", roomId: string}) => {
             this.roomManager.onIceCandidate(roomId, socket.id, candidate, type);
         });
+
+        socket.on("prepare-for-recording", ({roomId, startTime} : {roomId: string, startTime: number}) => {
+            const room = this.roomManager.getRoomById(roomId);
+            const userCount = this.roomManager.getUserCountInRoom(roomId);
+
+            if(!room) return;
+
+            if(userCount < 2){
+                console.log("EMIT EROR");
+                socket.emit("recording-error", {message: "Less than 2 users in the PodCell"});
+                return;
+            }
+
+            room.users.forEach((user) => {
+                user.socket.emit("start-recording-at", {startTime});
+            })
+        })
+
+        socket.on("stop-recording", ({roomId}: {roomId: string}) => {
+            const room = this.roomManager.getRoomById(roomId);
+            room?.users.forEach((user) => {
+                user.socket.emit("stop-recording");
+            })
+        })
     }
 
 

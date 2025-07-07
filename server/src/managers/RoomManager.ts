@@ -64,4 +64,13 @@ export class RoomManager {
         receiverUser?.socket.emit("add-ice-candidate", {candidate, type, roomId});
     }
 
+    public getRoomById(roomId: string): Room | undefined {
+        const room = this.rooms.get(roomId);
+        return room;
+    }
+
+    public getUserCountInRoom(roomId: string): number {
+        return this.rooms.get(roomId)?.users.length || 0;
+    }
+
 }
