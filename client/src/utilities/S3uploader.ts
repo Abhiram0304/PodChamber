@@ -22,7 +22,7 @@ export class S3Uploader {
     const region = import.meta.env.VITE_AWS_REGION;
     const bucketName = import.meta.env.VITE_S3_BUCKET_NAME;
 
-    if (!accessKeyId || !secretAccessKey || !bucketName || !region) {
+    if(!accessKeyId || !secretAccessKey || !bucketName || !region){
       throw new Error('Missing required AWS environment variables. Please check your .env file.');
     }
 
@@ -40,7 +40,7 @@ export class S3Uploader {
   }
 
   async uploadChunk(blob: Blob, roomId: string, userName: string): Promise<string> {
-    console.log("Uploading chunk using @aws-sdk/lib-storage");
+    console.log("Uploading chunk");
     const chunkId = `chunk-${this.chunkCount.toString().padStart(4, '0')}`;
     this.chunkCount++;
 
@@ -72,15 +72,15 @@ export class S3Uploader {
         const total = progress.total ?? 0;
 
         const percent = total > 0 ? ((loaded / total) * 100).toFixed(2) : '0';
-        console.log(`📦 Uploading ${key} → ${percent}%`);
+        console.log(`Uploading ${key} → ${percent}%`);
       });
 
       await upload.done();
       const location = `https://${this.bucketName}.s3.${this.s3Client.config.region}.amazonaws.com/${key}`;
-      console.log(`✅ Chunk ${chunkId} uploaded successfully:`, location);
+      console.log(`Chunk ${chunkId} uploaded successfully:`, location);
       return location;
     }catch(error){
-      console.error(`❌ Failed to upload chunk ${chunkId}:`, error);
+      console.error(`Failed to upload chunk ${chunkId}:`, error);
       throw error;
     }
   }

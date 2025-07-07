@@ -39,13 +39,13 @@ export default function createMediaRecorder(
   };
 
   const start = () => {
+    console.log('Recording started HERE');
     recorder.start(chunkInterval);
-    console.log('Recording started');
   };
 
   const stop = () => {
     recorder.stop();
-    console.log('Recording stopped');
+    console.log('Recording stopped HERE');
   };
 
   return { start, stop };

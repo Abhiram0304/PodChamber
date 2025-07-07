@@ -13,11 +13,10 @@ const Room = () => {
     const roomId = useSelector((state: RootState) => state.app.roomId)
 
     const [lobby, setLobby] = useState<boolean>(true)
-    const [_socket, setSocket] = useState<Socket | null>(null)
+    const [socket, setSocket] = useState<Socket | null>(null)
     const [_senderPc, setSenderPc] = useState<null | RTCPeerConnection>(null)    
     const [_receiverPc, setReceiverPc] = useState<null | RTCPeerConnection>(null)
     const [recordingOn, setRecordingOn] = useState<boolean>(false);
-    const [recorder, setRecorder] = useState<null | RecorderType>(null);
     const localVideoTrackRef = useRef<MediaStreamTrack | null>(null);
     const localAudioTrackRef = useRef<MediaStreamTrack | null>(null);
     // const [remoteVideoTrack, setRemoteVideoTrack] = useState<null | MediaStreamTrack>(null) 
@@ -27,8 +26,10 @@ const Room = () => {
     const localVideoRef = useRef<HTMLVideoElement | null>(null)
     const [audioMuted, setAudioMuted] = useState<boolean>(false);
     const [videoMuted, setVideoMuted] = useState<boolean>(false);
-    // const [s3Uploader, setS3Uploader] = useState<S3Uploader | null>(null);
     const s3UploaderRef = useRef<S3Uploader | null>(null);
+    const recorderRef = useRef<RecorderType | null>(null);
+    const [recordingStatusText, setRecordingStatusText] = useState<string>("Start Recording");
+
 
     useEffect(() => {
         if(localVideoTrackRef.current){
@@ -49,11 +50,9 @@ const Room = () => {
         const recorder = createMediaRecorder(
             stream, 
             async (blob) => {
-                // This callback will still run for logging/monitoring
                 console.log(`Chunk received: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
                 
-                // Local download as fallback (optional)
-                if (!s3UploaderRef.current) {
+                if(!s3UploaderRef.current){
                     console.log("LOCAL DOWNLOAD", s3UploaderRef.current);
                     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
                     const fileName = `recording-chunk-${timestamp}.webm`;
@@ -67,15 +66,15 @@ const Room = () => {
                     setTimeout(() => URL.revokeObjectURL(url), 100);
                 }
             },
-            10000, // 10 seconds
+            5000, // 5 seconds -> each chunk time
             {
                 s3Uploader: s3UploaderRef.current,
                 roomId: roomId,
                 userName: userName,
-                enableLocalDownload: !s3UploaderRef.current // Download locally if S3 not available
+                enableLocalDownload: !s3UploaderRef.current
             }
         );
-        setRecorder(recorder);
+        recorderRef.current = recorder;
 
         if(!localVideoRef.current) return;
 
@@ -83,13 +82,9 @@ const Room = () => {
         localVideoRef.current.play();
     }
 
-    // useEffect(() => {
-    //     // getMedia();
-    // }, []);
-
     useEffect(() => {
-        const socket: Socket = io("http://localhost:3000");
-        // const socket: Socket = io("https://podchamber.onrender.com");
+        // const socket: Socket = io("http://localhost:3000");
+        const socket: Socket = io("https://podchamber.onrender.com");
 
         socket.emit("join-room", {roomId, userName});
         
@@ -185,7 +180,7 @@ const Room = () => {
         socket.on("answer", ({remoteSdp} : {roomId: string, remoteSdp: RTCSessionDescriptionInit}) => {
             setLobby(false);
             setSenderPc(pc => {
-                if(pc) {
+                if(pc){
                     pc.setRemoteDescription(remoteSdp);
                 }
                 return pc;
@@ -214,12 +209,45 @@ const Room = () => {
             }
         });
 
+        socket.on("start-recording-at",({startTime}: {startTime: number}) => {
+            const delay = startTime - Date.now();
+            if(delay > 0){
+                console.log("Start the Recording After Delay:",delay);
+                setRecordingStatusText("Starting Recording...");
+                setTimeout(() => {
+                    console.log("SHOULD START NOW");
+                    recorderRef.current?.start();
+                    setRecordingStatusText("Recording..."); 
+                    setRecordingOn(true);
+                }, delay)
+            }else{
+                console.log("Recording Start time passed, start now");
+                recorderRef.current?.start();
+                setRecordingStatusText("Recording..."); 
+                setRecordingOn(true);
+            }
+        })
+
+        socket.on("stop-recording", () => {
+            recorderRef.current?.stop();
+            setRecordingOn(false);
+            setRecordingStatusText("Start Recording"); 
+        });
+
+        socket.on("recording-error", ({ message }: { message: string }) => {
+            console.warn("Recording error:", message);
+            setRecordingStatusText("Start Recording"); 
+            alert(message);
+        });
+
         setSocket(socket);
         
         return () => {
             socket.disconnect();
             if(recordingOn){
-                recorder?.stop();
+                socket.emit("stop-recording");
+                recorderRef.current?.stop();
+                setRecordingStatusText("Start Recording"); 
                 setRecordingOn(false);
             }
         };
@@ -227,23 +255,27 @@ const Room = () => {
     }, [userName, roomId]);
 
     const recordingHandler = () => {
+
+        if(!socket) return;
+
         if(recordingOn){
-            recorder?.stop();
-            setRecordingOn(false);
+            setRecordingStatusText("Stopping Recording...");
+            socket.emit("stop-recording", {roomId});
         }else{
-            recorder?.start();
-            setRecordingOn(true);
+            setRecordingStatusText("Starting Recording...");
+            const startTime = Date.now() + 5000;
+            socket.emit("prepare-for-recording", {roomId, startTime});
         }
     }
 
     useEffect(() => {
-        try {
+        try{
             const uploader = new S3Uploader('video-recordings/');
             console.log("Uploaded", uploader);
             s3UploaderRef.current = uploader;
             console.log('S3 uploader initialized');
             getMedia();
-        } catch (error) {
+        }catch(error){
             console.error('Failed to initialize S3 uploader:', error);
             console.warn('S3 upload will be disabled. Check your environment variables.');
         }
@@ -262,17 +294,17 @@ const Room = () => {
 
                     <button
                         onClick={recordingHandler}
-                        className={`px-6 py-2 rounded-xl font-semibold transition duration-300 ${
+                        className={`px-6 py-2 cursor-pointer rounded-xl font-semibold transition duration-300 ${
                             recordingOn
                             ? "bg-red-600 hover:bg-red-700"
                             : "bg-green-600 hover:bg-green-700"
                         }`}
                     >
-                        {recordingOn ? "⏹ Stop Recording" : "⏺ Start Recording"}
+                        {recordingStatusText}
                     </button>
                 </div>
                 <div className="text-sm text-gray-400">
-                    S3 Upload: {s3UploaderRef.current ? "✅ Ready" : "❌ Not configured"}
+                    S3 Upload: {s3UploaderRef.current ? "Ready" : "Not configured"}
                 </div>
                 <p>🛋 Room: <span className="font-semibold text-green-400">{roomId}</span></p>
             </div>
