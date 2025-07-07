@@ -287,10 +287,10 @@ const Room = () => {
             <div className="w-full flex justify-between items-center text-lg font-medium p-[1.5rem]">
                 <p>👋 Hello, <span className="font-semibold text-blue-400">{userName}</span></p>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <p className={`font-bold ${recordingOn ? "text-red-500" : "text-gray-400"}`}>
+                    {/* <p className={`font-bold ${recordingOn ? "text-red-500" : "text-gray-400"}`}>
                         🎙 Recording: {recordingOn ? "ON" : "OFF"}
                         {s3UploaderRef.current && recordingOn && <span className="text-green-400 ml-2">→ S3</span>}
-                    </p>
+                    </p> */}
 
                     <button
                         onClick={recordingHandler}
@@ -303,9 +303,9 @@ const Room = () => {
                         {recordingStatusText}
                     </button>
                 </div>
-                <div className="text-sm text-gray-400">
+                {/* <div className="text-sm text-gray-400">
                     S3 Upload: {s3UploaderRef.current ? "Ready" : "Not configured"}
-                </div>
+                </div> */}
                 <p>🛋 Room: <span className="font-semibold text-green-400">{roomId}</span></p>
             </div>
 
