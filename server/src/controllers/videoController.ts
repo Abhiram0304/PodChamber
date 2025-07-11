@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 import { downloadChunksToLocal } from "../utilities/chunksDownloader";
 import { concatenateChunks } from "../utilities/concatenateChunks";
 import { mergeVideosSideBySide } from "../utilities/layoutCreater";
+import { s3MergeUploader } from "../utilities/s3MergeUploader";
 
 const s3 = new S3Client({ region: process.env.AWS_REGION });
 
@@ -143,9 +144,13 @@ export const getCompleteLayoutVideo = async(req : Request, res : Response) => {
     const response2 = await mergeVideosSideBySide(video1, video2, finalOutput);
     console.log("Merge Response", response2);
 
+    const s3Key = `merged-videos/session-${Date.now()}.mp4`;
+    const finalUrl = await s3MergeUploader(finalOutput, s3Key);
+
     res.status(200).json({
       success: true,
       message: "DONE",
+      url: finalUrl
     })
     
   }catch(e){
