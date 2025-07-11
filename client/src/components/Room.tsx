@@ -12,6 +12,7 @@ const Room = () => {
     const userName = useSelector((state: RootState) => state.app.userName)
     const roomId = useSelector((state: RootState) => state.app.roomId)
 
+    const [remoteUserName, setRemoteUserName] = useState<string | null>(null);
     const [lobby, setLobby] = useState<boolean>(true)
     const [socket, setSocket] = useState<Socket | null>(null)
     const [_senderPc, setSenderPc] = useState<null | RTCPeerConnection>(null)    
@@ -287,15 +288,10 @@ const Room = () => {
 
 
     return (
-        <div className="w-[100vw] h-[100vh] bg-black text-white flex flex-col items-center gap-[2rem]">
-            <div className="w-full flex justify-between items-center text-lg font-medium p-[1.5rem]">
+        <div className="relative w-[100vw] min-h-[calc(100vh-4rem)] bg-black text-white flex flex-col items-center gap-[2rem]">
+            <div className="w-full flex justify-between items-center text-md font-medium p-[1rem]">
                 <p>👋 Hello, <span className="font-semibold text-blue-400">{userName}</span></p>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    {/* <p className={`font-bold ${recordingOn ? "text-red-500" : "text-gray-400"}`}>
-                        🎙 Recording: {recordingOn ? "ON" : "OFF"}
-                        {s3UploaderRef.current && recordingOn && <span className="text-green-400 ml-2">→ S3</span>}
-                    </p> */}
-
                     <button
                         onClick={recordingHandler}
                         className={`px-6 py-2 cursor-pointer rounded-xl font-semibold transition duration-300 ${
@@ -317,14 +313,14 @@ const Room = () => {
 
             <div className="flex gap-4 sm:w-[60%] w-[90%] sm:flex-row flex-col items-center justify-center">
                 <div className="w-full flex flex-col items-center">
-                    <p>Local Video (You)</p>
+                    <p>{userName} (You)</p>
                     <video autoPlay muted className="border-amber-50 w-full border-2 rounded-[1rem]" ref={localVideoRef} />
                 </div>
                 
-                <div className="w-full sm:h-full h-[300px] flex flex-col items-center">
-                    <p>Remote Video (Other User)</p>
+                <div className="w-full sm:h-full h-[300px] flex flex-col">
+                    <p>{remoteUserName!==null ? remoteUserName : ""}</p>
                     {lobby ? (
-                        <div className="w-full h-full border-amber-50 border-2 flex rounded-[1rem] items-center justify-center">
+                        <div className="w-full min-h-[200px] sm:h-full h-[300px] border-amber-50 border-2 flex rounded-[1rem] items-center justify-center">
                             <p>Waiting to connect you to someone</p>
                         </div>
                     ) : (
@@ -337,7 +333,7 @@ const Room = () => {
                 <button
                     onClick={() => setAudioMuted(!audioMuted)}
                     className={`
-                        relative w-14 h-14 rounded-full flex items-center justify-center
+                        relative cursor-pointer w-14 h-14 rounded-full flex items-center justify-center
                         transition-all duration-200 ease-in-out transform hover:scale-105
                         ${audioMuted 
                             ? 'bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/30' 
@@ -360,7 +356,7 @@ const Room = () => {
                 <button
                     onClick={() => setVideoMuted(!videoMuted)}
                     className={`
-                        relative w-14 h-14 rounded-full flex items-center justify-center
+                        relative cursor-pointer w-14 h-14 rounded-full flex items-center justify-center
                         transition-all duration-200 ease-in-out transform hover:scale-105
                         ${videoMuted 
                             ? 'bg-red-600 hover:bg-red-700 shadow-lg shadow-red-600/30' 
@@ -381,7 +377,7 @@ const Room = () => {
                 </button>
             </div>
 
-            <div className="w-full text-center text-white font-semibold">Made by Abhiram T</div>
+            <div className="absolute bottom-[1rem] w-full text-center text-white font-semibold">Made by Abhiram T</div>
         </div>
     )
 }
