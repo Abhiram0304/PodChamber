@@ -5,7 +5,7 @@ import { GET_COMPLETE_LAYOUT_VIDEO_API, GET_VIDEO_RECORDINGS_FROM_SESSION_ID_API
 const Recordings = () => {
 
     const [sessionId, setSessionId] = useState<string>("");
-    const [chunksData, setChunksData] = useState([]);
+    // const [chunksData, setChunksData] = useState([]);
 
     const fetchAllChunksHandler = async() => {
         console.log("SF", sessionId);
