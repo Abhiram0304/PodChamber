@@ -1,7 +1,7 @@
-import { S3Uploader } from './S3uploader';
+import { S3PresignedUploader } from './S3uploader';
 
 export interface RecorderConfig {
-  s3Uploader?: S3Uploader | null;
+  S3PresignedUploader?: S3PresignedUploader | null;
   roomId?: string;
   userName?: string;
   enableLocalDownload?: boolean;
@@ -10,7 +10,7 @@ export interface RecorderConfig {
 export default function createMediaRecorder(
   stream: MediaStream,
   onChunk: (blob: Blob) => void,
-  chunkInterval = 1000, // 1 sec
+  chunkInterval = 10000, // 1 sec
   config?: RecorderConfig
 ) {
   const recorder = new MediaRecorder(stream, { 
@@ -21,9 +21,9 @@ export default function createMediaRecorder(
     if(event.data && event.data.size > 0){
       onChunk(event.data);
 
-      if(config?.s3Uploader && config?.roomId && config?.userName){
+      if(config?.S3PresignedUploader && config?.roomId && config?.userName){
         try{
-          await config.s3Uploader.uploadChunk(
+          await config.S3PresignedUploader.uploadChunk(
             event.data, 
             config.roomId, 
             config.userName

@@ -5,8 +5,8 @@ import { io, Socket } from "socket.io-client";
 import createMediaRecorder from "../utilities/MediaRecorder";
 import type { RecorderType } from "../types";
 import { BsMic, BsMicMute, BsCameraVideo, BsCameraVideoOff } from 'react-icons/bs';
-import { S3Uploader } from "../utilities/S3uploader";
-
+import { S3PresignedUploader } from "../utilities/S3uploader";
+import { SERVER_URL } from "../services/APIs";
 const Room = () => {
 
     const userName = useSelector((state: RootState) => state.app.userName)
@@ -26,7 +26,7 @@ const Room = () => {
     const localVideoRef = useRef<HTMLVideoElement | null>(null)
     const [audioMuted, setAudioMuted] = useState<boolean>(false);
     const [videoMuted, setVideoMuted] = useState<boolean>(false);
-    const s3UploaderRef = useRef<S3Uploader | null>(null);
+    const s3PresignedUploaderRef = useRef<S3PresignedUploader | null>(null);
     const recorderRef = useRef<RecorderType | null>(null);
     const [recordingStatusText, setRecordingStatusText] = useState<string>("Start Recording");
 
@@ -52,8 +52,8 @@ const Room = () => {
             async (blob) => {
                 console.log(`Chunk received: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
                 
-                if(!s3UploaderRef.current){
-                    console.log("LOCAL DOWNLOAD", s3UploaderRef.current);
+                if(!s3PresignedUploaderRef.current){
+                    console.log("LOCAL DOWNLOAD", s3PresignedUploaderRef.current);
                     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
                     const fileName = `recording-chunk-${timestamp}.webm`;
                     console.log("FILENAME", fileName);
@@ -68,10 +68,10 @@ const Room = () => {
             },
             5000, // 5 seconds -> each chunk time
             {
-                s3Uploader: s3UploaderRef.current,
+                S3PresignedUploader: s3PresignedUploaderRef.current,
                 roomId: roomId,
                 userName: userName,
-                enableLocalDownload: !s3UploaderRef.current
+                enableLocalDownload: !s3PresignedUploaderRef.current
             }
         );
         recorderRef.current = recorder;
@@ -83,8 +83,7 @@ const Room = () => {
     }
 
     useEffect(() => {
-        // const socket: Socket = io("http://localhost:3000");
-        const socket: Socket = io("https://podchamber.onrender.com");
+        const socket: Socket = io(SERVER_URL);
 
         socket.emit("join-room", {roomId, userName});
         
@@ -209,8 +208,14 @@ const Room = () => {
             }
         });
 
-        socket.on("start-recording-at",({startTime}: {startTime: number}) => {
+        socket.on("start-recording-at",({startTime, sessionId}: {startTime: number, sessionId: string}) => {
             const delay = startTime - Date.now();
+            console.log("Session ID:", sessionId);
+
+            if(s3PresignedUploaderRef.current){
+                s3PresignedUploaderRef.current.setSessionId(sessionId);
+            }
+
             if(delay > 0){
                 console.log("Start the Recording After Delay:",delay);
                 setRecordingStatusText("Starting Recording...");
@@ -270,16 +275,15 @@ const Room = () => {
 
     useEffect(() => {
         try{
-            const uploader = new S3Uploader('video-recordings/');
-            console.log("Uploaded", uploader);
-            s3UploaderRef.current = uploader;
-            console.log('S3 uploader initialized');
+            if(!socket) return; 
+            const uploader = new S3PresignedUploader(socket);
+            s3PresignedUploaderRef.current = uploader;
+            console.log("S3 pre-signed uploader initialized");
             getMedia();
         }catch(error){
             console.error('Failed to initialize S3 uploader:', error);
-            console.warn('S3 upload will be disabled. Check your environment variables.');
         }
-    }, []);
+    }, [socket]);
 
 
     return (

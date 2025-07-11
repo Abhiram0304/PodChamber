@@ -42,6 +42,7 @@ const Home = () => {
         <div className="w-[100%] flex flex-col justify-center items-center gap-[1rem]">
             <p className="text-[#adb5bd] font-extrabold text-[28px] text-center">PodRecord</p>
             <p className="text-[#adb5bd] font-semibold text-[22px] text-center">Creating podcasts made easy</p>
+            <button className="bg-amber-200 text-black font-bold p-[0.5rem] rounded-[1rem]" onClick={() => navigate("/recordings")}>Get Recordings</button>
         </div>
 
         <div className="flex md:flex-row flex-col justify-center items-center gap-[3rem]">
