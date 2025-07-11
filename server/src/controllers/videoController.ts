@@ -147,6 +147,8 @@ export const getCompleteLayoutVideo = async(req : Request, res : Response) => {
     const s3Key = `merged-videos/session-${Date.now()}.mp4`;
     const finalUrl = await s3MergeUploader(finalOutput, s3Key);
 
+    console.log("FINLA URL", finalUrl);
+
     res.status(200).json({
       success: true,
       message: "DONE",
