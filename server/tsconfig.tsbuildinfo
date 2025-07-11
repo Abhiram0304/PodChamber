@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/managers/roommanager.ts","./src/managers/usermanager.ts"],"version":"5.8.3"}
+{"root":["./src/index.ts","./src/config/s3client.ts","./src/controllers/videocontroller.ts","./src/managers/roommanager.ts","./src/managers/usermanager.ts","./src/routes/videoroutes.ts","./src/utilities/chunksdownloader.ts","./src/utilities/concatenatechunks.ts","./src/utilities/layoutcreater.ts","./src/utilities/s3uploader.ts"],"version":"5.8.3"}

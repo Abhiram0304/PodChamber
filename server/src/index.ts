@@ -2,8 +2,21 @@ import { Server, Socket } from "socket.io";
 import { UserManager } from "./managers/UserManager";
 import http from "http";
 import express from "express";
+import videoRoutes from './routes/videoRoutes'
+import cors from 'cors';
 
 const app = express();
+app.use(express.json());
+
+app.use(
+    cors({
+        origin : "*",
+        credentials:true,
+    })
+)
+
+app.use("/api", videoRoutes);
+
 const server = http.createServer(app);
 const userManager = new UserManager();
 

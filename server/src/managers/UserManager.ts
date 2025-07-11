@@ -1,5 +1,7 @@
 import { Socket } from "socket.io";
 import { RoomManager } from "./RoomManager";
+import { s3Uploader } from "../utilities/s3Uploader";
+import { v4 as uuidv4 } from 'uuid';
 
 export interface User {
     socket: Socket;
@@ -40,8 +42,11 @@ export class UserManager {
                 return;
             }
 
+            const sessionId = `${roomId}-${Date.now()}-${uuidv4()}`;
+            console.log(`Recording session started: ${sessionId}`);
+
             room.users.forEach((user) => {
-                user.socket.emit("start-recording-at", {startTime});
+                user.socket.emit("start-recording-at", {startTime, sessionId});
             })
         })
 
@@ -51,6 +56,14 @@ export class UserManager {
                 user.socket.emit("stop-recording");
             })
         })
+
+        socket.on("get-presigned-url", async (
+            { roomId, userName, chunkIndex, sessionId },
+            callback
+        ) => {
+            const result = await s3Uploader({ roomId, userName, chunkIndex, sessionId });
+            callback(result);
+        });
     }
 
 
