@@ -31,7 +31,7 @@ export const getVideoChunksFromSessionId = async (req: Request, res: Response) =
     const result = await s3.send(command);
 
     if(!result.Contents || result.Contents.length === 0){
-      res.status(404).json({
+      res.status(402).json({
         success: false,
         message: "No video chunks found for this session",
       });
