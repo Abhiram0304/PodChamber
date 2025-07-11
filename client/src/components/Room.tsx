@@ -12,7 +12,7 @@ const Room = () => {
     const userName = useSelector((state: RootState) => state.app.userName)
     const roomId = useSelector((state: RootState) => state.app.roomId)
 
-    const [remoteUserName, setRemoteUserName] = useState<string | null>(null);
+    const [remoteUserName, _setRemoteUserName] = useState<string | null>(null);
     const [lobby, setLobby] = useState<boolean>(true)
     const [socket, setSocket] = useState<Socket | null>(null)
     const [_senderPc, setSenderPc] = useState<null | RTCPeerConnection>(null)    
