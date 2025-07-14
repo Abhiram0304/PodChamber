@@ -126,7 +126,7 @@ export const getCompleteLayoutVideo = async (req: Request, res: Response) => {
     });
 
     setImmediate(async () => {
-      try {
+      try{
         for (const user in users) users[user].sort();
 
         const tempFolder = path.join(tmpdir(), uuidv4());

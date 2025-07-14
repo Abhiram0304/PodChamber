@@ -10,8 +10,6 @@ export const concatenateChunks = async (
   const content = inputFiles.map(f => `file '${f}'`).join("\n");
   await fs.writeFile(listFile, content);
 
-  console.log("HERE1233");
-
   return new Promise((resolve, reject) => {
     ffmpeg()
       .input(listFile)
