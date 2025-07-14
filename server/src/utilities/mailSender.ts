@@ -6,7 +6,7 @@ interface MailTypes {
     body: string
 }
 
-const SendEmail = async({email,title,body}: MailTypes) => {
+export const SendEmail = async({email,title,body}: MailTypes) => {
     try{
         const transporter = nodemailer.createTransport({
             pool:true,
@@ -34,5 +34,3 @@ const SendEmail = async({email,title,body}: MailTypes) => {
         throw(e);
     }
 }
-
-module.exports = SendEmail;

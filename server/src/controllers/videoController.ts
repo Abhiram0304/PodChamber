@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
 import { ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
-import axios from "axios";
-import ffmpeg from "fluent-ffmpeg";
 import fs from "fs/promises";
 import path from "path";
 import { tmpdir } from "os";
@@ -12,6 +10,7 @@ import { mergeVideosSideBySide } from "../utilities/layoutCreater";
 import { s3MergeUploader } from "../utilities/s3MergeUploader";
 import preRenderVideoLinkTemplate from "../mailTemplates/preRenderVideoLink";
 import preRenderVideoFailureTemplate from "../mailTemplates/preRenderVideoFailureTemplate";
+import { SendEmail } from "../utilities/mailSender";
 
 const s3 = new S3Client({ region: process.env.AWS_REGION });
 
