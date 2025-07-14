@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: podchamber-server
+    env: node
+    plan: free
+    rootDir: server
+    buildCommand: |
+      apt-get update && \
+      apt-get install -y ffmpeg && \
+      npm install
+    startCommand: npm run de
