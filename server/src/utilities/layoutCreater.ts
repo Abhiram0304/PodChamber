@@ -1,4 +1,7 @@
 import ffmpeg from "fluent-ffmpeg";
+import ffmpegPath from "ffmpeg-static";
+
+ffmpeg.setFfmpegPath(ffmpegPath!);
 
 export const mergeVideosSideBySide = async (
   left: string,
@@ -12,9 +15,7 @@ export const mergeVideosSideBySide = async (
       .complexFilter([
         "[0:v]scale=-1:720[left]",
         "[1:v]scale=-1:720[right]",
-
         "[left]pad=iw+20:ih[leftpad]",
-
         "[leftpad][right]overlay=x=W-ow:y=0[outv]"
       ])
       .map("outv")
