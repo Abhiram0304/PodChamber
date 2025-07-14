@@ -40,13 +40,13 @@ const Home = () => {
     }
 
   return (
-    <div className="relative w-[100vw] min-h-[calc(100vh-4rem)] bg-[#000000] flex flex-col justify-center items-center gap-[4rem]">
+    <div className="relative pb-[2rem] w-[100vw] min-h-[calc(100vh-4rem)] bg-[#000000] flex flex-col justify-center items-center gap-[4rem]">
         <div className="w-[100%] flex flex-col justify-center items-center gap-[1rem]">
             <p className="md:max-w-[50%] max-w-[95%] text-[#adb5bd] font-semibold text-[20px] text-center">Record high quality podcasts without worrying about internet issues, with our unique local video recording architecture.</p>
             <button className="px-[1rem] py-[0.5rem] bg-[#fca311] rounded-2xl hover:scale-105 transition-all duration-200 cursor-pointer font-semibold text-black" onClick={() => navigate('/about')}>Know More</button>       
         </div>
         <div className="flex md:flex-row flex-col mx-auto justify-center items-center md:gap-[6rem] gap-[3rem]">
-            <video className="sm:w-[35%] w-[70%] rounded-[1rem]" autoPlay ref={videoRef} muted />
+            <video className="sm:w-[30%] w-[70%] rounded-[1rem]" autoPlay ref={videoRef} muted />
 
             <div className="flex flex-col justify-center items-center gap-[1rem]">
                 <p className="text-[#adb5bd] max-w-[95%] font-semibold text-[16px] md:text-[18px] text-center">Join a pod cell and start your podcast now !</p>

@@ -20,8 +20,14 @@ export class RoomManager {
         if(room?.users.length === 2){
             const firstUser = room.users[0];
             const secondUser = room.users[1];
-            firstUser.socket.emit("send-offer", { roomId });
-            secondUser.socket.emit("send-offer", { roomId });
+            const firstUserName = firstUser?.userName;
+            const secondUserName = secondUser?.userName;
+            // firstUser.socket.emit("send-offer", { roomId, remoteUserName: secondUserName });
+            // secondUser.socket.emit("send-offer", { roomId, remoteUserName: firstUserName });
+            setTimeout(() => {
+                firstUser.socket.emit("send-offer", { roomId, remoteUserName: secondUserName });
+                secondUser.socket.emit("send-offer", { roomId, remoteUserName: firstUserName });
+            }, 500);
         }
     }
 

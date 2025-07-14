@@ -7,22 +7,23 @@ import type { RecorderType } from "../types";
 import { BsMic, BsMicMute, BsCameraVideo, BsCameraVideoOff } from 'react-icons/bs';
 import { S3PresignedUploader } from "../utilities/S3uploader";
 import { SERVER_URL } from "../services/APIs";
+import toast from "react-hot-toast";
+import { FiCopy } from "react-icons/fi";
+
 const Room = () => {
 
     const userName = useSelector((state: RootState) => state.app.userName)
     const roomId = useSelector((state: RootState) => state.app.roomId)
 
-    const [remoteUserName, _setRemoteUserName] = useState<string | null>(null);
+    const [remoteUserName, setRemoteUserName] = useState<string | null>(null);
+    const [sessionId, setSessionId] = useState<string | null>(null);
     const [lobby, setLobby] = useState<boolean>(true)
     const [socket, setSocket] = useState<Socket | null>(null)
-    const [_senderPc, setSenderPc] = useState<null | RTCPeerConnection>(null)    
-    const [_receiverPc, setReceiverPc] = useState<null | RTCPeerConnection>(null)
+    const senderPcRef = useRef<RTCPeerConnection | null>(null);
+    const receiverPcRef = useRef<RTCPeerConnection | null>(null);
     const [recordingOn, setRecordingOn] = useState<boolean>(false);
     const localVideoTrackRef = useRef<MediaStreamTrack | null>(null);
     const localAudioTrackRef = useRef<MediaStreamTrack | null>(null);
-    // const [remoteVideoTrack, setRemoteVideoTrack] = useState<null | MediaStreamTrack>(null) 
-    // const [remoteAudioTrack, setRemoteAudioTrack] = useState<null | MediaStreamTrack>(null) 
-    // const [remoteMediaStream, setRemoteMediaStream] = useState<null | MediaStream>(null)    
     const remoteVideoRef = useRef<HTMLVideoElement | null>(null)
     const localVideoRef = useRef<HTMLVideoElement | null>(null)
     const [audioMuted, setAudioMuted] = useState<boolean>(false);
@@ -52,13 +53,9 @@ const Room = () => {
             stream, 
             async (blob) => {
                 console.log(`Chunk received: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
-                
                 if(!s3PresignedUploaderRef.current){
-                    console.log("LOCAL DOWNLOAD", s3PresignedUploaderRef.current);
                     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
                     const fileName = `recording-chunk-${timestamp}.webm`;
-                    console.log("FILENAME", fileName);
-
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -88,9 +85,28 @@ const Room = () => {
 
         socket.emit("join-room", {roomId, userName});
         
-        socket.on("send-offer", async({roomId} : {roomId : string}) => {
+        socket.on("send-offer", async({roomId, remoteUserName} : {roomId : string, remoteUserName: string}) => {
+            setRemoteUserName(remoteUserName)
             setLobby(false);
             const pc = new RTCPeerConnection();
+
+            pc.ontrack = (event) => {
+                const [remoteStream] = event.streams;
+
+                if(remoteVideoRef.current && remoteStream){
+                    if(remoteVideoRef.current.srcObject !== remoteStream){
+                    remoteVideoRef.current.srcObject = remoteStream;
+
+                    remoteVideoRef.current
+                        .play()
+                        .catch((err) => {
+                            if(err.name !== "AbortError"){
+                                console.warn("Error playing remote video:", err);
+                            }
+                        });
+                    }
+                }
+            };
 
             const stream = new MediaStream();
             if(localVideoTrackRef.current){
@@ -103,14 +119,6 @@ const Room = () => {
             stream.getTracks().forEach((track) => {
                 pc.addTrack(track, stream);
             });
-
-            pc.ontrack = (event) => {
-                const [remoteStream] = event.streams;
-                if(remoteVideoRef.current && remoteStream){
-                    remoteVideoRef.current.srcObject = remoteStream;
-                    remoteVideoRef.current.play().catch(console.error);
-                }
-            };
 
             pc.onicecandidate = (event) => {
                 if(event.candidate){
@@ -128,18 +136,28 @@ const Room = () => {
                 socket.emit("offer", {sdp, roomId});
             }
 
-            setSenderPc(pc);
+            senderPcRef.current = pc;
         })
 
         socket.on("offer", async({remoteSdp, roomId} : {remoteSdp: RTCSessionDescriptionInit, roomId: string}) => {
             setLobby(false);
             const pc = new RTCPeerConnection();
-            
+
             pc.ontrack = (event) => {
                 const [remoteStream] = event.streams;
+
                 if(remoteVideoRef.current && remoteStream){
-                    remoteVideoRef.current.srcObject = remoteStream;
-                    remoteVideoRef.current.play().catch(console.error);
+                    if(remoteVideoRef.current.srcObject !== remoteStream){
+                        remoteVideoRef.current.srcObject = remoteStream;
+                        remoteVideoRef.current
+                            .play()
+                            .catch((err) => {
+                                console.log("Remote Video Play Erroe")
+                                if(err.name !== "AbortError"){
+                                    console.warn("Error playing remote video:", err);
+                                }
+                            });
+                    }
                 }
             };
 
@@ -169,7 +187,7 @@ const Room = () => {
                 })
             }
 
-            setReceiverPc(pc);
+            receiverPcRef.current = pc;
 
             socket.emit("answer", {
                 sdp,
@@ -177,14 +195,9 @@ const Room = () => {
             })
         })
 
-        socket.on("answer", ({remoteSdp} : {roomId: string, remoteSdp: RTCSessionDescriptionInit}) => {
+        socket.on("answer", ({remoteSdp} : {remoteSdp: RTCSessionDescriptionInit}) => {
             setLobby(false);
-            setSenderPc(pc => {
-                if(pc){
-                    pc.setRemoteDescription(remoteSdp);
-                }
-                return pc;
-            });
+            senderPcRef.current?.setRemoteDescription(remoteSdp);
         })
 
         socket.on("lobby", () => {
@@ -193,25 +206,16 @@ const Room = () => {
 
         socket.on("add-ice-candidate", ({ candidate, type}) => {
             if(type === "sender"){
-                setReceiverPc(pc => {
-                    if(pc){
-                        pc.addIceCandidate(candidate).catch(console.error);
-                    }
-                    return pc; 
-                })
+                receiverPcRef?.current?.addIceCandidate(candidate);
             }else{
-                setSenderPc(pc => {
-                    if(pc){
-                        pc.addIceCandidate(candidate).catch(console.error);
-                    }
-                    return pc;
-                })
+                senderPcRef?.current?.addIceCandidate(candidate);
             }
         });
 
         socket.on("start-recording-at",({startTime, sessionId}: {startTime: number, sessionId: string}) => {
             const delay = startTime - Date.now();
-            console.log("Session ID:", sessionId);
+            setSessionId(sessionId);
+            toast("Copy the SessionId shown, to later access your recording");
 
             if(s3PresignedUploaderRef.current){
                 s3PresignedUploaderRef.current.setSessionId(sessionId);
@@ -235,6 +239,7 @@ const Room = () => {
         })
 
         socket.on("stop-recording", () => {
+            setSessionId(null);
             recorderRef.current?.stop();
             setRecordingOn(false);
             setRecordingStatusText("Start Recording"); 
@@ -261,7 +266,6 @@ const Room = () => {
     }, [userName, roomId]);
 
     const recordingHandler = () => {
-
         if(!socket) return;
 
         if(recordingOn){
@@ -288,10 +292,39 @@ const Room = () => {
 
 
     return (
-        <div className="relative w-[100vw] min-h-[calc(100vh-4rem)] bg-black text-white flex flex-col items-center gap-[2rem]">
+        <div className="relative pb-[3rem] w-[100vw] min-h-[calc(100vh-4rem)] bg-black text-white flex flex-col items-center gap-[2rem]">
             <div className="w-full flex justify-between items-center text-md font-medium p-[1rem]">
                 <p>👋 Hello, <span className="font-semibold text-blue-400">{userName}</span></p>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="sm:flex hidden flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <button
+                            onClick={recordingHandler}
+                            className={`px-6 py-2 cursor-pointer rounded-xl font-semibold transition duration-300 ${
+                                recordingOn
+                                ? "bg-red-600 hover:bg-red-700"
+                                : "bg-green-600 hover:bg-green-700"
+                            }`}
+                        >
+                            {recordingStatusText}
+                        </button>
+                        {
+                            sessionId && (
+                                <div className="max-w-[300px] text-wrap text-[0.75rem] flex items-center gap-1">
+                                    <span className="font-bold">Session Id: {sessionId}</span>
+                                    <FiCopy
+                                        className="cursor-pointer text-[1.5rem] hover:text-blue-500 transition"
+                                        onClick={() => {
+                                        navigator.clipboard.writeText(sessionId);
+                                        }}
+                                        title="Copy Session ID"
+                                    />
+                                </div>
+                            )
+                        }
+                </div>
+                <p>🛋 Room: <span className="font-semibold text-green-400">{roomId}</span></p>
+            </div>
+
+            <div className="sm:hidden flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <button
                         onClick={recordingHandler}
                         className={`px-6 py-2 cursor-pointer rounded-xl font-semibold transition duration-300 ${
@@ -302,14 +335,21 @@ const Room = () => {
                     >
                         {recordingStatusText}
                     </button>
-                </div>
-                {/* <div className="text-sm text-gray-400">
-                    S3 Upload: {s3UploaderRef.current ? "Ready" : "Not configured"}
-                </div> */}
-                <p>🛋 Room: <span className="font-semibold text-green-400">{roomId}</span></p>
+                    {
+                        sessionId && (
+                            <div className="max-w-[300px] text-wrap text-[0.75rem] flex items-center gap-1">
+                                <span className="font-bold">Session Id: {sessionId}</span>
+                                <FiCopy
+                                    className="cursor-pointer text-[1.5rem] hover:text-blue-500 transition"
+                                    onClick={() => {
+                                    navigator.clipboard.writeText(sessionId);
+                                    }}
+                                    title="Copy Session ID"
+                                />
+                            </div>
+                        )
+                    }
             </div>
-
-            
 
             <div className="flex gap-4 sm:w-[60%] w-[90%] sm:flex-row flex-col items-center justify-center">
                 <div className="w-full flex flex-col items-center">
@@ -317,8 +357,8 @@ const Room = () => {
                     <video autoPlay muted className="border-amber-50 w-full border-2 rounded-[1rem]" ref={localVideoRef} />
                 </div>
                 
-                <div className="w-full sm:h-full h-[300px] flex flex-col">
-                    <p>{remoteUserName!==null ? remoteUserName : ""}</p>
+                <div className="w-full flex flex-col items-center">
+                    <p>{remoteUserName!==null ? remoteUserName : "No User Joined Yet"}</p>
                     {lobby ? (
                         <div className="w-full min-h-[200px] sm:h-full h-[300px] border-amber-50 border-2 flex rounded-[1rem] items-center justify-center">
                             <p>Waiting to connect you to someone</p>

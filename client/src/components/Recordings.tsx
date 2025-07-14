@@ -46,7 +46,7 @@ const Recordings = () => {
         const response = await APIconnector({
             method: "POST",
             url: GET_COMPLETE_LAYOUT_VIDEO_API,
-            bodyData: {sessionId,email}
+            bodyData: {sessionId,emailId: email}
         });
 
         if(response?.data?.success){
@@ -78,20 +78,21 @@ const Recordings = () => {
 
                 <label className="text-white mt-[1rem] font-medium self-start">Email Address</label>
                 <input
+                    type="email"
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter Email Address"
                     className="w-full px-4 py-2 rounded-md border border-gray-500 bg-white text-black"
                 />
 
                 <button
-                    className="w-full cursor-pointer hover:scale-105 transition-all duration-200 mt-[3rem] bg-amber-300 hover:bg-amber-400 text-black font-semibold py-2 rounded-lg transition"
+                    className="w-full cursor-pointer hover:scale-105 transition-all duration-200 mt-[3rem] bg-amber-300 hover:bg-amber-400 text-black font-semibold py-2 rounded-lg"
                     onClick={fetchAllChunksHandler}
                 >
                     Fetch Chunks Only
                 </button>
 
                 <button
-                    className="w-full cursor-pointer hover:scale-105 transition-all duration-200 bg-amber-300 hover:bg-amber-400 text-black font-semibold py-2 rounded-lg transition"
+                    className="w-full cursor-pointer hover:scale-105 transition-all duration-200 bg-amber-300 hover:bg-amber-400 text-black font-semibold py-2 rounded-lg"
                     onClick={getCompleleLayoutVideoHandler}
                 >
                     Get Pre-rendered Video
