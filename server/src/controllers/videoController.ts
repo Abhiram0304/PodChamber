@@ -127,7 +127,9 @@ export const getCompleteLayoutVideo = async (req: Request, res: Response) => {
 
     setImmediate(async () => {
       try{
-        for (const user in users) users[user].sort();
+        for (const user in users){
+          users[user].sort();
+        }
 
         const tempFolder = path.join(tmpdir(), uuidv4());
         await fs.mkdir(tempFolder, { recursive: true });
@@ -136,8 +138,8 @@ export const getCompleteLayoutVideo = async (req: Request, res: Response) => {
         const [chunks1, chunks2] = [users[user1], users[user2]];
 
         const [local1, local2] = await Promise.all([
-          downloadChunksToLocal(sessionId, chunks1),
-          downloadChunksToLocal(sessionId, chunks2),
+          downloadChunksToLocal(sessionId, user1, chunks1),
+          downloadChunksToLocal(sessionId, user2, chunks2),
         ]);
 
         const video1 = path.join(tempFolder, `${user1}-merged.webm`);

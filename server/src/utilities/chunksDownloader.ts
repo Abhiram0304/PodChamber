@@ -2,8 +2,8 @@ import axios from "axios";
 import fs from "fs/promises";
 import path from "path";
 
-export const downloadChunksToLocal = async (sessionId: string, urls: string[]): Promise<string[]> => {
-    const folder = path.join(process.cwd(), "chunksStorage", sessionId);
+export const downloadChunksToLocal = async (sessionId: string, userName: string, urls: string[]): Promise<string[]> => {
+    const folder = path.join(process.cwd(), "chunksStorage", sessionId, userName);
     await fs.mkdir(folder, { recursive: true });
 
     const localPaths: string[] = [];

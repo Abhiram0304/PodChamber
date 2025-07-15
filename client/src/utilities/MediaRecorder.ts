@@ -14,7 +14,7 @@ export default function createMediaRecorder(
   config?: RecorderConfig
 ) {
   const recorder = new MediaRecorder(stream, { 
-    mimeType: 'video/webm;codecs=vp9,opus',
+    mimeType: 'video/webm;codecs=vp8,opus',
   });
 
   recorder.ondataavailable = async (event) => {
@@ -30,9 +30,9 @@ export default function createMediaRecorder(
           );
         }catch(error){
           console.error('S3 upload failed:', error);
-          // if (config.enableLocalDownload) {
-          //   downloadChunkLocally(event.data);
-          // }
+          if(config.enableLocalDownload){
+            downloadChunkLocally(event.data);
+          }
         }
       }
     }
@@ -49,4 +49,19 @@ export default function createMediaRecorder(
   };
 
   return { start, stop };
+}
+
+function downloadChunkLocally(blob: Blob) {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const fileName = `${timestamp}.webm`;
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
 }
