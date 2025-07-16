@@ -42,6 +42,7 @@ const Room = () => {
         }
     }, [audioMuted, videoMuted]);
 
+
     const getMedia = async () => {
         const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
         const videoTrack = stream.getVideoTracks()[0];

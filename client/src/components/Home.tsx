@@ -13,24 +13,51 @@ const Home = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const getMedia = async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
-        const videoTrack = stream.getVideoTracks()[0];
-        // const audioTrack = stream.getAudioTracks()[0];
-        // dispatch(setLocalAudioTrack(audioTrack));
-        // dispatch(setLocalVideoTrack(videoTrack));
+    // const getMedia = async () => {
+    //     const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+    //     const videoTrack = stream.getVideoTracks()[0];
+    //     // const audioTrack = stream.getAudioTracks()[0];
+    //     // dispatch(setLocalAudioTrack(audioTrack));
+    //     // dispatch(setLocalVideoTrack(videoTrack));
 
-        if(!videoRef.current) return;
+    //     if(!videoRef.current) return;
 
-        videoRef.current.srcObject = new MediaStream([videoTrack]);
-        videoRef.current.play();
-    }
+    //     videoRef.current.srcObject = new MediaStream([videoTrack]);
+    //     videoRef.current.play();
+    // }
+
+    // useEffect(() => {
+    //     if(videoRef && videoRef.current){
+    //         getMedia();
+    //     }
+    // }, [videoRef]);
 
     useEffect(() => {
-        if(videoRef && videoRef.current){
-            getMedia();
-        }
-    }, [videoRef]);
+        let stream: MediaStream;
+
+        const getMedia = async () => {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const videoTrack = stream.getVideoTracks()[0];
+            if(videoRef.current){
+                videoRef.current.srcObject = new MediaStream([videoTrack]);
+                videoRef.current.play();
+            }
+        };
+
+        getMedia();
+
+        return () => {
+            if(stream){
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            if(videoRef.current){
+                videoRef.current.pause();
+                videoRef.current.srcObject = null;
+            }
+        };
+    }, []);
+
 
     const joinRoomHandler = () => {
         dispatch(setRoomIdFn(roomId));
