@@ -101,6 +101,8 @@ const Room = () => {
             console.log("ADDING NEW MEDIASTREAM", event.track);
             const newStream = new MediaStream([event.track]);
             console.log("ADDING NEW MEDIASTREAM1", newStream);
+            console.log("All tracks in remote stream:", newStream.getTracks());
+            console.log("Video tracks in remote stream:", newStream.getVideoTracks());
             remoteVideoRef.current.srcObject = newStream;
             console.log("ADDING NEW MEDIASTREAM2", remoteVideoRef.current.srcObject);
             
