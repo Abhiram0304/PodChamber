@@ -116,7 +116,9 @@ const Room = () => {
     };
 
     useEffect(() => {
+        console.log("HERE12");
         if(!mediaReady) return;
+        console.log("dsfdfsgrg");
 
         const socket: Socket = io(SERVER_URL);
 
@@ -305,7 +307,7 @@ const Room = () => {
             }
         };
         
-    }, [mediaReady]);
+    }, [userName, roomId, mediaReady]);
 
     const recordingHandler = () => {
         if(!socket) return;
