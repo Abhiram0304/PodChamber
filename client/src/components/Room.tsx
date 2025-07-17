@@ -105,7 +105,7 @@ const Room = () => {
             console.log("ADDING NEW MEDIASTREAM2", remoteVideoRef.current.srcObject);
             
             // console.log("REMOTE VIDEO REF", remoteVideoRef.current);
-            // remoteVideoRef.current.play()
+            remoteVideoRef.current.play()
             //     .then(() => console.log("PLAYING"))
             //     .catch(() => console.log("ERROR !!!!"));
         }
