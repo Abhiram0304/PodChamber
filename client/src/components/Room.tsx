@@ -154,7 +154,7 @@ const Room = () => {
                         remoteVideoRef.current
                             .play()
                             .catch((err) => {
-                                console.log("Remote Video Play Erroe")
+                                console.log("Remote Video Play Erroe", err);
                                 if(err.name !== "AbortError"){
                                     console.warn("Error playing remote video:", err);
                                 }
