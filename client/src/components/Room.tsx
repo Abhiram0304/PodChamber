@@ -81,6 +81,23 @@ const Room = () => {
         localVideoRef.current.play();
     }
 
+    const handleRemoteTrack = (event: RTCTrackEvent) => {
+        if(!remoteVideoRef.current) return;
+        
+        const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
+
+        if(existingStream){
+            existingStream.addTrack(event.track);
+        }else{
+            const newStream = new MediaStream([event.track]);
+            remoteVideoRef.current.srcObject = newStream;
+            
+            remoteVideoRef.current.play().catch(err => {
+                console.log("Remote video play-back was interrupted or prevented.", err);
+            });
+        }
+    };
+
     useEffect(() => {
         const socket: Socket = io(SERVER_URL);
 
@@ -91,23 +108,25 @@ const Room = () => {
             setLobby(false);
             const pc = new RTCPeerConnection();
 
-            pc.ontrack = (event) => {
-                const [remoteStream] = event.streams;
+            // pc.ontrack = (event) => {
+            //     const [remoteStream] = event.streams;
 
-                if(remoteVideoRef.current && remoteStream){
-                    if(remoteVideoRef.current.srcObject !== remoteStream){
-                    remoteVideoRef.current.srcObject = remoteStream;
+            //     if(remoteVideoRef.current && remoteStream){
+            //         if(remoteVideoRef.current.srcObject !== remoteStream){
+            //         remoteVideoRef.current.srcObject = remoteStream;
 
-                    remoteVideoRef.current
-                        .play()
-                        .catch((err) => {
-                            if(err.name !== "AbortError"){
-                                console.warn("Error playing remote video:", err);
-                            }
-                        });
-                    }
-                }
-            };
+            //         remoteVideoRef.current
+            //             .play()
+            //             .catch((err) => {
+            //                 if(err.name !== "AbortError"){
+            //                     console.warn("Error playing remote video:", err);
+            //                 }
+            //             });
+            //         }
+            //     }
+            // };
+
+            pc.ontrack = handleRemoteTrack;
 
             const stream = new MediaStream();
             if(localVideoTrackRef.current){
@@ -145,24 +164,26 @@ const Room = () => {
             setLobby(false);
             const pc = new RTCPeerConnection();
 
-            pc.ontrack = (event) => {
-                const [remoteStream] = event.streams;
+            // pc.ontrack = (event) => {
+            //     const [remoteStream] = event.streams;
 
-                if(remoteVideoRef.current && remoteStream){
-                    if(remoteVideoRef.current.srcObject !== remoteStream){
-                        remoteVideoRef.current.srcObject = remoteStream;
-                        remoteVideoRef.current
-                            .play()
-                            .catch((err) => {
-                                console.log("Remote Video Play Erroe", err);
-                                if(err.name !== "AbortError"){
-                                    console.warn("Error playing remote video:", err);
-                                }
-                            });
-                    }
-                }
-            };
+            //     if(remoteVideoRef.current && remoteStream){
+            //         if(remoteVideoRef.current.srcObject !== remoteStream){
+            //             remoteVideoRef.current.srcObject = remoteStream;
+            //             remoteVideoRef.current
+            //                 .play()
+            //                 .catch((err) => {
+            //                     console.log("Remote Video Play Erroe", err);
+            //                     if(err.name !== "AbortError"){
+            //                         console.warn("Error playing remote video:", err);
+            //                     }
+            //                 });
+            //         }
+            //     }
+            // };
 
+            pc.ontrack = handleRemoteTrack;
+            
             const stream = new MediaStream();
             if(localVideoTrackRef.current){
                 stream.addTrack(localVideoTrackRef.current);
