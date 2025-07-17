@@ -397,7 +397,7 @@ const Room = () => {
                             <p>Waiting to connect you to someone</p>
                         </div>
                     ) : (
-                        <video autoPlay playsInline className="border-amber-50 w-full border-2 rounded-[1rem]" ref={remoteVideoRef} />
+                        <video autoPlay muted playsInline className="border-amber-50 w-full border-2 rounded-[1rem]" ref={remoteVideoRef} />
                     )}
                 </div>
             </div>
