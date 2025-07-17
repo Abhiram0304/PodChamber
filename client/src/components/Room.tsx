@@ -98,11 +98,11 @@ const Room = () => {
             console.log("EXISTING TRACK ADDING");
             existingStream.addTrack(event.track);
         }else{
-            console.log("ADDING NEW MEDIASTREAM");
+            console.log("ADDING NEW MEDIASTREAM", event.track);
             const newStream = new MediaStream([event.track]);
-            console.log("ADDING NEW MEDIASTREAM1");
+            console.log("ADDING NEW MEDIASTREAM1", newStream);
             remoteVideoRef.current.srcObject = newStream;
-            console.log("ADDING NEW MEDIASTREAM2");
+            console.log("ADDING NEW MEDIASTREAM2", remoteVideoRef.current.srcObject);
             
             remoteVideoRef.current.play()
                 .then(() => console.log("PLAYING"))
