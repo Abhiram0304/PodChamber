@@ -183,7 +183,7 @@ const Room = () => {
             // };
 
             pc.ontrack = handleRemoteTrack;
-            
+
             const stream = new MediaStream();
             if(localVideoTrackRef.current){
                 stream.addTrack(localVideoTrackRef.current);
@@ -377,7 +377,7 @@ const Room = () => {
             <div className="flex gap-4 sm:w-[60%] w-[90%] sm:flex-row flex-col items-center justify-center">
                 <div className="w-full flex flex-col items-center">
                     <p>{userName} (You)</p>
-                    <video autoPlay playsInline muted className="border-amber-50 w-full border-2 rounded-[1rem]" ref={localVideoRef} />
+                    <video autoPlay muted className="border-amber-50 w-full border-2 rounded-[1rem]" ref={localVideoRef} />
                 </div>
                 
                 <div className="w-full flex flex-col items-center">
@@ -387,7 +387,7 @@ const Room = () => {
                             <p>Waiting to connect you to someone</p>
                         </div>
                     ) : (
-                        <video autoPlay playsInline className="border-amber-50 w-full border-2 rounded-[1rem]" ref={remoteVideoRef} />
+                        <video autoPlay className="border-amber-50 w-full border-2 rounded-[1rem]" ref={remoteVideoRef} />
                     )}
                 </div>
             </div>
