@@ -323,12 +323,17 @@ const Room = () => {
     }
 
     useEffect(() => {
+        getMedia();
+    },[]);
+
+    useEffect(() => {
         try{
+            console.log("dsfd");
             if(!socket) return; 
             const uploader = new S3PresignedUploader(socket);
             s3PresignedUploaderRef.current = uploader;
             console.log("S3 pre-signed uploader initialized");
-            getMedia();
+            // getMedia();
         }catch(error){
             console.error('Failed to initialize S3 uploader:', error);
         }
