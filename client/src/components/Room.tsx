@@ -83,6 +83,7 @@ const Room = () => {
 
     const handleRemoteTrack = (event: RTCTrackEvent) => {
         if(!remoteVideoRef.current) return;
+        console.log("EVent", event);
         
         const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
 
