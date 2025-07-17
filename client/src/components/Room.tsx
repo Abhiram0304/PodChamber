@@ -89,18 +89,11 @@ const Room = () => {
             return;
         }
 
-        // Log the video element the ref is pointing to
-        // console.log("Attaching track to remote video element:", remoteVideoRef.current);
-        
-        // console.log("EVent", event);
-        
         const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
 
         if(existingStream){
-            console.log("EXISTING TRACK ADDING");
             existingStream.addTrack(event.track);
         }else{
-            console.log("ADDING NEW MEDIASTREAM", event.track);
             const newStream = new MediaStream([event.track]);
             console.log("ADDING NEW MEDIASTREAM1", newStream);
             console.log("All tracks in remote stream:", newStream.getTracks());
