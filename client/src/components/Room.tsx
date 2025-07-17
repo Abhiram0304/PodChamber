@@ -132,6 +132,7 @@ const Room = () => {
             }
 
             pc.onnegotiationneeded = async() => {
+                console.log(("NEGOTIATION DONE"));
                 const sdp = await pc.createOffer();
                 await pc.setLocalDescription(sdp);
                 socket.emit("offer", {sdp, roomId});
