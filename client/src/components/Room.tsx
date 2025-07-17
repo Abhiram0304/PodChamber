@@ -31,7 +31,7 @@ const Room = () => {
     const s3PresignedUploaderRef = useRef<S3PresignedUploader | null>(null);
     const recorderRef = useRef<RecorderType | null>(null);
     const [recordingStatusText, setRecordingStatusText] = useState<string>("Start Recording");
-    const [mediaReady, setMediaReady] = useState<boolean>(false);
+    // const [mediaReady, setMediaReady] = useState<boolean>(false);
 
     useEffect(() => {
         if(localVideoTrackRef.current){
@@ -42,30 +42,30 @@ const Room = () => {
         }
     }, [audioMuted, videoMuted]);
 
-    const handleRemoteTrack = (event: RTCTrackEvent) => {
-        if(!remoteVideoRef.current){
-            console.error("Cannot attach track: remoteVideoRef.current is null.");
-            return;
-        }
+    // const handleRemoteTrack = (event: RTCTrackEvent) => {
+    //     if(!remoteVideoRef.current){
+    //         console.error("Cannot attach track: remoteVideoRef.current is null.");
+    //         return;
+    //     }
 
-        const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
+    //     const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
 
-        if(existingStream){
-            existingStream.addTrack(event.track);
-        }else{
-            const newStream = new MediaStream([event.track]);
-            console.log("ADDING NEW MEDIASTREAM1", newStream);
-            console.log("All tracks in remote stream:", newStream.getTracks());
-            console.log("Video tracks in remote stream:", newStream.getVideoTracks());
-            remoteVideoRef.current.srcObject = newStream;
-            console.log("ADDING NEW MEDIASTREAM2", remoteVideoRef.current.srcObject);
+    //     if(existingStream){
+    //         existingStream.addTrack(event.track);
+    //     }else{
+    //         const newStream = new MediaStream([event.track]);
+    //         console.log("ADDING NEW MEDIASTREAM1", newStream);
+    //         console.log("All tracks in remote stream:", newStream.getTracks());
+    //         console.log("Video tracks in remote stream:", newStream.getVideoTracks());
+    //         remoteVideoRef.current.srcObject = newStream;
+    //         console.log("ADDING NEW MEDIASTREAM2", remoteVideoRef.current.srcObject);
             
-            console.log("REMOTE VIDEO REF", remoteVideoRef.current);
-            remoteVideoRef.current.play()
-                .then(() => console.log("PLAYING"))
-                .catch(() => console.log("ERROR !!!!"));
-        }
-    };
+    //         console.log("REMOTE VIDEO REF", remoteVideoRef.current);
+    //         remoteVideoRef.current.play()
+    //             .then(() => console.log("PLAYING"))
+    //             .catch(() => console.log("ERROR !!!!"));
+    //     }
+    // };
 
     
 
@@ -305,6 +305,39 @@ const Room = () => {
     //     };
         
     // }, [userName, roomId]);
+
+    const handleRemoteTrack = (event: RTCTrackEvent) => {
+        if (!remoteVideoRef.current) {
+            console.error("Cannot attach track: remoteVideoRef.current is null.");
+            return;
+        }
+
+        let remoteStream = remoteVideoRef.current.srcObject as MediaStream | null;
+
+        if (!remoteStream) {
+            remoteStream = new MediaStream();
+            remoteVideoRef.current.srcObject = remoteStream;
+        }
+
+        const trackAlreadyExists = remoteStream.getTracks().some(
+            (t) => t.id === event.track.id
+        );
+
+        if (!trackAlreadyExists) {
+            console.log("🔗 Adding remote track:", event.track.kind);
+            remoteStream.addTrack(event.track);
+        } else {
+            console.log("⚠️ Track already exists, skipping:", event.track.kind);
+        }
+
+        remoteVideoRef.current
+            .play()
+            .then(() => console.log("▶️ Remote video playing"))
+            .catch((err) => {
+                console.warn("⚠️ Error playing remote video:", err);
+            });
+    };
+
 
     useEffect(() => {
         const init = async() => {
