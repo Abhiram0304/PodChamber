@@ -82,7 +82,7 @@ const Room = () => {
     }
 
     const handleRemoteTrack = (event: RTCTrackEvent) => {
-        if (!remoteVideoRef.current) {
+        if(!remoteVideoRef.current){
             console.error("Cannot attach track: remoteVideoRef.current is null.");
             return;
         }
@@ -94,15 +94,17 @@ const Room = () => {
         
         const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
 
-        if (existingStream) {
+        if(existingStream){
             existingStream.addTrack(event.track);
-        } else {
+        }else{
             const newStream = new MediaStream([event.track]);
             remoteVideoRef.current.srcObject = newStream;
             
-            remoteVideoRef.current.play().catch(err => {
-                console.log("Remote video play-back was interrupted or prevented.", err);
-            });
+            remoteVideoRef.current.play()
+                .then(() => console.log("PLAYING"))
+                .catch(err => {
+                    console.log("Remote video play-back was interrupted or prevented.", err);
+                });
         }
     };
 
