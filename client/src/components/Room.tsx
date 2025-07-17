@@ -42,47 +42,6 @@ const Room = () => {
         }
     }, [audioMuted, videoMuted]);
 
-
-    const getMedia = async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
-        const videoTrack = stream.getVideoTracks()[0];
-        const audioTrack = stream.getAudioTracks()[0];
-        localAudioTrackRef.current = audioTrack;
-        localVideoTrackRef.current = videoTrack;
-
-        const recorder = createMediaRecorder(
-            stream, 
-            async (blob) => {
-                console.log(`Chunk received: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
-                if(!s3PresignedUploaderRef.current){
-                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                    const fileName = `recording-chunk-${timestamp}.webm`;
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = fileName;
-                    a.click();
-                    setTimeout(() => URL.revokeObjectURL(url), 100);
-                }
-            },
-            5000, // 5 seconds -> each chunk time
-            {
-                S3PresignedUploader: s3PresignedUploaderRef.current,
-                roomId: roomId,
-                userName: userName,
-                enableLocalDownload: !s3PresignedUploaderRef.current
-            }
-        );
-        recorderRef.current = recorder;
-
-        if(!localVideoRef.current) return;
-
-        localVideoRef.current.srcObject = new MediaStream([videoTrack]);
-        localVideoRef.current.play();
-
-        setMediaReady(true);
-    }
-
     const handleRemoteTrack = (event: RTCTrackEvent) => {
         if(!remoteVideoRef.current){
             console.error("Cannot attach track: remoteVideoRef.current is null.");
@@ -110,10 +69,57 @@ const Room = () => {
 
     useEffect(() => {
         console.log("HERE12");
-        if(!mediaReady) return;
+        if(mediaReady) return;
         console.log("dsfdfsgrg");
 
         const socket: Socket = io(SERVER_URL);
+        setSocket(socket);
+
+        const getMedia = async () => {
+        
+            const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+            const videoTrack = stream.getVideoTracks()[0];
+            const audioTrack = stream.getAudioTracks()[0];
+            localAudioTrackRef.current = audioTrack;
+            localVideoTrackRef.current = videoTrack;
+
+            const uploader = new S3PresignedUploader(socket);
+            s3PresignedUploaderRef.current = uploader;
+
+            const recorder = createMediaRecorder(
+                stream, 
+                async (blob) => {
+                    console.log(`Chunk received: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+                    if(!s3PresignedUploaderRef.current){
+                        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                        const fileName = `recording-chunk-${timestamp}.webm`;
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = fileName;
+                        a.click();
+                        setTimeout(() => URL.revokeObjectURL(url), 100);
+                    }
+                },
+                5000, // 5 seconds -> each chunk time
+                {
+                    S3PresignedUploader: s3PresignedUploaderRef.current,
+                    roomId: roomId,
+                    userName: userName,
+                    enableLocalDownload: !s3PresignedUploaderRef.current
+                }
+            );
+            recorderRef.current = recorder;
+
+            if(!localVideoRef.current) return;
+
+            localVideoRef.current.srcObject = new MediaStream([videoTrack]);
+            localVideoRef.current.play();
+
+            setMediaReady(true);
+        }
+
+        getMedia();
 
         socket.emit("join-room", {roomId, userName});
         
@@ -288,8 +294,6 @@ const Room = () => {
             alert(message);
         });
 
-        setSocket(socket);
-        
         return () => {
             socket.disconnect();
             if(recordingOn){
@@ -300,7 +304,7 @@ const Room = () => {
             }
         };
         
-    }, [userName, roomId, mediaReady]);
+    }, [userName, roomId]);
 
     const recordingHandler = () => {
         if(!socket) return;
@@ -315,22 +319,22 @@ const Room = () => {
         }
     }
 
-    useEffect(() => {
-        getMedia();
-    },[]);
+    // useEffect(() => {
+    //     getMedia();
+    // },[]);
 
-    useEffect(() => {
-        try{
-            console.log("dsfd");
-            if(!socket) return; 
-            const uploader = new S3PresignedUploader(socket);
-            s3PresignedUploaderRef.current = uploader;
-            console.log("S3 pre-signed uploader initialized");
-            // getMedia();
-        }catch(error){
-            console.error('Failed to initialize S3 uploader:', error);
-        }
-    }, [socket]);
+    // useEffect(() => {
+    //     try{
+    //         console.log("dsfd");
+    //         if(!socket) return; 
+    //         const uploader = new S3PresignedUploader(socket);
+    //         s3PresignedUploaderRef.current = uploader;
+    //         console.log("S3 pre-signed uploader initialized");
+    //         // getMedia();
+    //     }catch(error){
+    //         console.error('Failed to initialize S3 uploader:', error);
+    //     }
+    // }, [socket]);
 
 
     return (
