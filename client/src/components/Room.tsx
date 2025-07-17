@@ -31,7 +31,7 @@ const Room = () => {
     const s3PresignedUploaderRef = useRef<S3PresignedUploader | null>(null);
     const recorderRef = useRef<RecorderType | null>(null);
     const [recordingStatusText, setRecordingStatusText] = useState<string>("Start Recording");
-
+    const [mediaReady, setMediaReady] = useState<boolean>(false);
 
     useEffect(() => {
         if(localVideoTrackRef.current){
@@ -79,6 +79,8 @@ const Room = () => {
 
         localVideoRef.current.srcObject = new MediaStream([videoTrack]);
         localVideoRef.current.play();
+
+        setMediaReady(true);
     }
 
     const handleRemoteTrack = (event: RTCTrackEvent) => {
@@ -114,6 +116,8 @@ const Room = () => {
     };
 
     useEffect(() => {
+        if(!mediaReady) return;
+
         const socket: Socket = io(SERVER_URL);
 
         socket.emit("join-room", {roomId, userName});
@@ -301,7 +305,7 @@ const Room = () => {
             }
         };
         
-    }, [userName, roomId]);
+    }, [mediaReady]);
 
     const recordingHandler = () => {
         if(!socket) return;
