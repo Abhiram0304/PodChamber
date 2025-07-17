@@ -82,14 +82,21 @@ const Room = () => {
     }
 
     const handleRemoteTrack = (event: RTCTrackEvent) => {
-        if(!remoteVideoRef.current) return;
+        if (!remoteVideoRef.current) {
+            console.error("Cannot attach track: remoteVideoRef.current is null.");
+            return;
+        }
+
+        // Log the video element the ref is pointing to
+        console.log("Attaching track to remote video element:", remoteVideoRef.current);
+        
         console.log("EVent", event);
         
         const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
 
-        if(existingStream){
+        if (existingStream) {
             existingStream.addTrack(event.track);
-        }else{
+        } else {
             const newStream = new MediaStream([event.track]);
             remoteVideoRef.current.srcObject = newStream;
             
