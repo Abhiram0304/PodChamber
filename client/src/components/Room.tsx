@@ -307,8 +307,6 @@ const Room = () => {
     // }, [userName, roomId]);
 
     useEffect(() => {
-        if(mediaReady) return;
-
         const init = async() => {
             const socket: Socket = io(SERVER_URL);
             setSocket(socket);
@@ -351,8 +349,6 @@ const Room = () => {
                 localVideoRef.current.srcObject = new MediaStream([videoTrack]);
                 localVideoRef.current.play();
             }
-
-            setMediaReady(true);
 
             socket.emit("join-room", {roomId, userName});
             
