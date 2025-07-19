@@ -33,6 +33,8 @@ const Room = () => {
     const [recordingStatusText, setRecordingStatusText] = useState<string>("Start Recording");
     const [mediaReady, setMediaReady] = useState<boolean>(false);
     const [localMediaStream, setLocalMediaStream] = useState<MediaStream | null>(null);
+    const remoteMediaStreamRef = useRef<MediaStream | null>(new MediaStream());
+
 
     useEffect(() => {
         if(localVideoTrackRef.current){
@@ -43,30 +45,56 @@ const Room = () => {
         }
     }, [audioMuted, videoMuted]);
 
+    // const handleRemoteTrack = (event: RTCTrackEvent) => {
+    //     if(!remoteVideoRef.current){
+    //         console.error("Cannot attach track: remoteVideoRef.current is null.");
+    //         return;
+    //     }
+
+    //     const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
+
+    //     if(existingStream){
+    //         existingStream.addTrack(event.track);
+    //     }else{
+    //         const newStream = new MediaStream([event.track]);
+    //         console.log("ADDING NEW MEDIASTREAM1", newStream);
+    //         console.log("All tracks in remote stream:", newStream.getTracks());
+    //         console.log("Video tracks in remote stream:", newStream.getVideoTracks());
+    //         remoteVideoRef.current.srcObject = newStream;
+    //         console.log("ADDING NEW MEDIASTREAM2", remoteVideoRef.current.srcObject);
+            
+    //         console.log("REMOTE VIDEO REF", remoteVideoRef.current);
+    //         remoteVideoRef.current.play()
+    //             .then(() => console.log("PLAYING"))
+    //             .catch(() => console.log("ERROR !!!!"));
+    //     }
+    // };
+
     const handleRemoteTrack = (event: RTCTrackEvent) => {
-        if(!remoteVideoRef.current){
+        if (!remoteVideoRef.current) {
             console.error("Cannot attach track: remoteVideoRef.current is null.");
             return;
         }
 
-        const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
+        console.log("Received remote track:", event.track.kind, event.track.id);
 
-        if(existingStream){
-            existingStream.addTrack(event.track);
-        }else{
-            const newStream = new MediaStream([event.track]);
-            console.log("ADDING NEW MEDIASTREAM1", newStream);
-            console.log("All tracks in remote stream:", newStream.getTracks());
-            console.log("Video tracks in remote stream:", newStream.getVideoTracks());
-            remoteVideoRef.current.srcObject = newStream;
-            console.log("ADDING NEW MEDIASTREAM2", remoteVideoRef.current.srcObject);
-            
-            console.log("REMOTE VIDEO REF", remoteVideoRef.current);
-            remoteVideoRef.current.play()
-                .then(() => console.log("PLAYING"))
-                .catch(() => console.log("ERROR !!!!"));
+        if (!remoteMediaStreamRef.current) {
+            remoteMediaStreamRef.current = new MediaStream();
         }
+
+        remoteMediaStreamRef.current.addTrack(event.track);
+
+        console.log("Remote Stream - All Tracks:", remoteMediaStreamRef.current.getTracks());
+        console.log("Remote Video Tracks:", remoteMediaStreamRef.current.getVideoTracks());
+
+        remoteVideoRef.current.srcObject = remoteMediaStreamRef.current;
+
+        remoteVideoRef.current
+            .play()
+            .then(() => console.log("Remote video playing"))
+            .catch((err) => console.error("Error playing remote video:", err));
     };
+
 
     const getMedia = async () => {
         
@@ -83,8 +111,6 @@ const Room = () => {
 
             localVideoRef.current.srcObject = new MediaStream([videoTrack]);
             localVideoRef.current.play();
-
-            for(let i = 1; i <= 10000; i++) console.log("LOOPING", i);
 
             setMediaReady(true);
     }
