@@ -76,14 +76,17 @@ const Room = () => {
             localAudioTrackRef.current = audioTrack;
             localVideoTrackRef.current = videoTrack;
 
+            console.log("Stream");
             setLocalMediaStream(stream);
-            setMediaReady(true);
 
             if(!localVideoRef.current) return;
 
             localVideoRef.current.srcObject = new MediaStream([videoTrack]);
             localVideoRef.current.play();
 
+            for(let i = 1; i <= 10000; i++) console.log("LOOPING", i);
+
+            setMediaReady(true);
     }
 
     useEffect(() => {
@@ -129,7 +132,7 @@ const Room = () => {
     useEffect(() => {
 
         if(!mediaReady) return;
-
+        console.log("IN SOCKET");
         const socket: Socket = io(SERVER_URL);
         setSocket(socket);
 
