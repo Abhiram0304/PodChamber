@@ -71,29 +71,45 @@ const Room = () => {
     // };
 
     const handleRemoteTrack = (event: RTCTrackEvent) => {
-        if (!remoteVideoRef.current) {
-            console.error("Cannot attach track: remoteVideoRef.current is null.");
-            return;
-        }
-
-        console.log("Received remote track:", event.track.kind, event.track.id);
+        const track = event.track;
 
         if (!remoteMediaStreamRef.current) {
             remoteMediaStreamRef.current = new MediaStream();
         }
 
-        remoteMediaStreamRef.current.addTrack(event.track);
+        // Check for existing track with same kind and same ID
+        const alreadyPresent = remoteMediaStreamRef.current
+            .getTracks()
+            .some((t) => t.id === track.id);
 
-        console.log("Remote Stream - All Tracks:", remoteMediaStreamRef.current.getTracks());
-        console.log("Remote Video Tracks:", remoteMediaStreamRef.current.getVideoTracks());
+        if (!alreadyPresent) {
+            // Optionally ensure only 1 track of each kind
+            if (track.kind === 'video') {
+            // Remove all old video tracks before adding
+            remoteMediaStreamRef.current.getVideoTracks().forEach((t) => {
+                remoteMediaStreamRef.current?.removeTrack(t);
+            });
+            } else if (track.kind === 'audio') {
+            remoteMediaStreamRef.current.getAudioTracks().forEach((t) => {
+                remoteMediaStreamRef.current?.removeTrack(t);
+            });
+            }
 
-        remoteVideoRef.current.srcObject = remoteMediaStreamRef.current;
+            // Only add the new track if it's not muted (optional)
+            if (!track.muted || track.kind === "audio") {
+            remoteMediaStreamRef.current.addTrack(track);
+            }
 
-        remoteVideoRef.current
-            .play()
-            .then(() => console.log("Remote video playing"))
-            .catch((err) => console.error("Error playing remote video:", err));
-    };
+            // Assign stream
+            if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = remoteMediaStreamRef.current;
+            remoteVideoRef.current.play().catch((err) =>
+                console.error("Error playing remote video:", err)
+            );
+            }
+        }
+        };
+
 
 
     const getMedia = async () => {
