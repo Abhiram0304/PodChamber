@@ -31,7 +31,8 @@ const Room = () => {
     const s3PresignedUploaderRef = useRef<S3PresignedUploader | null>(null);
     const recorderRef = useRef<RecorderType | null>(null);
     const [recordingStatusText, setRecordingStatusText] = useState<string>("Start Recording");
-    // const [mediaReady, setMediaReady] = useState<boolean>(false);
+    const [mediaReady, setMediaReady] = useState<boolean>(false);
+    const [localMediaStream, setLocalMediaStream] = useState<MediaStream | null>(null);
 
     useEffect(() => {
         if(localVideoTrackRef.current){
@@ -42,319 +43,60 @@ const Room = () => {
         }
     }, [audioMuted, videoMuted]);
 
-    // const handleRemoteTrack = (event: RTCTrackEvent) => {
-    //     if(!remoteVideoRef.current){
-    //         console.error("Cannot attach track: remoteVideoRef.current is null.");
-    //         return;
-    //     }
-
-    //     const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
-
-    //     if(existingStream){
-    //         existingStream.addTrack(event.track);
-    //     }else{
-    //         const newStream = new MediaStream([event.track]);
-    //         console.log("ADDING NEW MEDIASTREAM1", newStream);
-    //         console.log("All tracks in remote stream:", newStream.getTracks());
-    //         console.log("Video tracks in remote stream:", newStream.getVideoTracks());
-    //         remoteVideoRef.current.srcObject = newStream;
-    //         console.log("ADDING NEW MEDIASTREAM2", remoteVideoRef.current.srcObject);
-            
-    //         console.log("REMOTE VIDEO REF", remoteVideoRef.current);
-    //         remoteVideoRef.current.play()
-    //             .then(() => console.log("PLAYING"))
-    //             .catch(() => console.log("ERROR !!!!"));
-    //     }
-    // };
-
-    
-
-    // useEffect(() => {
-    //     if(mediaReady) return;
-
-    //     const socket: Socket = io(SERVER_URL);
-    //     setSocket(socket);
-
-    //     const getMedia = async () => {
-        
-    //         const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
-    //         const videoTrack = stream.getVideoTracks()[0];
-    //         const audioTrack = stream.getAudioTracks()[0];
-    //         localAudioTrackRef.current = audioTrack;
-    //         localVideoTrackRef.current = videoTrack;
-
-    //         const uploader = new S3PresignedUploader(socket);
-    //         s3PresignedUploaderRef.current = uploader;
-
-    //         const recorder = createMediaRecorder(
-    //             stream, 
-    //             async (blob) => {
-    //                 console.log(`Chunk received: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
-    //                 if(!s3PresignedUploaderRef.current){
-    //                     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    //                     const fileName = `recording-chunk-${timestamp}.webm`;
-    //                     const url = URL.createObjectURL(blob);
-    //                     const a = document.createElement('a');
-    //                     a.href = url;
-    //                     a.download = fileName;
-    //                     a.click();
-    //                     setTimeout(() => URL.revokeObjectURL(url), 100);
-    //                 }
-    //             },
-    //             5000, // 5 seconds -> each chunk time
-    //             {
-    //                 S3PresignedUploader: s3PresignedUploaderRef.current,
-    //                 roomId: roomId,
-    //                 userName: userName,
-    //                 enableLocalDownload: !s3PresignedUploaderRef.current
-    //             }
-    //         );
-    //         recorderRef.current = recorder;
-
-    //         if(!localVideoRef.current) return;
-
-    //         localVideoRef.current.srcObject = new MediaStream([videoTrack]);
-    //         localVideoRef.current.play();
-
-    //         setMediaReady(true);
-    //     }
-
-    //     getMedia();
-
-    //     socket.emit("join-room", {roomId, userName});
-        
-    //     socket.on("send-offer", async({roomId, remoteUserName} : {roomId : string, remoteUserName: string}) => {
-    //         setRemoteUserName(remoteUserName)
-    //         setLobby(false);
-    //         const pc = new RTCPeerConnection();
-
-    //         // pc.ontrack = (event) => {
-    //         //     const [remoteStream] = event.streams;
-
-    //         //     if(remoteVideoRef.current && remoteStream){
-    //         //         if(remoteVideoRef.current.srcObject !== remoteStream){
-    //         //         remoteVideoRef.current.srcObject = remoteStream;
-
-    //         //         remoteVideoRef.current
-    //         //             .play()
-    //         //             .catch((err) => {
-    //         //                 if(err.name !== "AbortError"){
-    //         //                     console.warn("Error playing remote video:", err);
-    //         //                 }
-    //         //             });
-    //         //         }
-    //         //     }
-    //         // };
-
-    //         pc.ontrack = handleRemoteTrack;
-
-    //         const stream = new MediaStream();
-    //         if(localVideoTrackRef.current){
-    //             stream.addTrack(localVideoTrackRef.current);
-    //         }
-    //         if(localAudioTrackRef.current){
-    //             stream.addTrack(localAudioTrackRef.current);
-    //         }
-
-    //         stream.getTracks().forEach((track) => {
-    //             pc.addTrack(track, stream);
-    //         });
-
-    //         pc.onicecandidate = (event) => {
-    //             if(event.candidate){
-    //                 socket.emit("add-ice-candidate", {
-    //                     candidate: event.candidate,
-    //                     roomId: roomId,
-    //                     type: "sender",
-    //                 })
-    //             }
-    //         }
-
-    //         pc.onnegotiationneeded = async() => {
-    //             console.log(("NEGOTIATION DONE"));
-    //             const sdp = await pc.createOffer();
-    //             await pc.setLocalDescription(sdp);
-    //             socket.emit("offer", {sdp, roomId});
-    //         }
-
-    //         senderPcRef.current = pc;
-    //     })
-
-    //     socket.on("offer", async({remoteSdp, roomId} : {remoteSdp: RTCSessionDescriptionInit, roomId: string}) => {
-    //         setLobby(false);
-    //         const pc = new RTCPeerConnection();
-
-    //         // pc.ontrack = (event) => {
-    //         //     const [remoteStream] = event.streams;
-
-    //         //     if(remoteVideoRef.current && remoteStream){
-    //         //         if(remoteVideoRef.current.srcObject !== remoteStream){
-    //         //             remoteVideoRef.current.srcObject = remoteStream;
-    //         //             remoteVideoRef.current
-    //         //                 .play()
-    //         //                 .catch((err) => {
-    //         //                     console.log("Remote Video Play Erroe", err);
-    //         //                     if(err.name !== "AbortError"){
-    //         //                         console.warn("Error playing remote video:", err);
-    //         //                     }
-    //         //                 });
-    //         //         }
-    //         //     }
-    //         // };
-
-    //         pc.ontrack = handleRemoteTrack;
-
-    //         const stream = new MediaStream();
-    //         if(localVideoTrackRef.current){
-    //             stream.addTrack(localVideoTrackRef.current);
-    //         }
-    //         if(localAudioTrackRef.current){
-    //             stream.addTrack(localAudioTrackRef.current);
-    //         }
-
-    //         stream.getTracks().forEach((track) => {
-    //             pc.addTrack(track, stream);
-    //         });
-
-    //         await pc.setRemoteDescription(new RTCSessionDescription(remoteSdp));
-    //         const sdp = await pc.createAnswer();
-    //         await pc.setLocalDescription(sdp);
-
-    //         pc.onicecandidate = (event) => {
-    //             if(!event.candidate) return;
-
-    //             socket.emit("add-ice-candidate", {
-    //                 candidate: event.candidate,
-    //                 roomId: roomId,
-    //                 type: "receiver",
-    //             })
-    //         }
-
-    //         receiverPcRef.current = pc;
-
-    //         socket.emit("answer", {
-    //             sdp,
-    //             roomId,
-    //         })
-    //     })
-
-    //     socket.on("answer", ({remoteSdp} : {remoteSdp: RTCSessionDescriptionInit}) => {
-    //         setLobby(false);
-    //         senderPcRef.current?.setRemoteDescription(remoteSdp);
-    //     })
-
-    //     socket.on("lobby", () => {
-    //         setLobby(true);
-    //     })
-
-    //     socket.on("add-ice-candidate", ({ candidate, type}) => {
-    //         if(type === "sender"){
-    //             receiverPcRef?.current?.addIceCandidate(candidate);
-    //         }else{
-    //             senderPcRef?.current?.addIceCandidate(candidate);
-    //         }
-    //     });
-
-    //     socket.on("start-recording-at",({startTime, sessionId}: {startTime: number, sessionId: string}) => {
-    //         const delay = startTime - Date.now();
-    //         setSessionId(sessionId);
-    //         toast("Copy the SessionId shown, to later access your recording");
-
-    //         if(s3PresignedUploaderRef.current){
-    //             s3PresignedUploaderRef.current.setSessionId(sessionId);
-    //         }
-
-    //         if(delay > 0){
-    //             console.log("Start the Recording After Delay:",delay);
-    //             setRecordingStatusText("Starting Recording...");
-    //             setTimeout(() => {
-    //                 console.log("SHOULD START NOW");
-    //                 recorderRef.current?.start();
-    //                 setRecordingStatusText("Recording..."); 
-    //                 setRecordingOn(true);
-    //             }, delay)
-    //         }else{
-    //             console.log("Recording Start time passed, start now");
-    //             recorderRef.current?.start();
-    //             setRecordingStatusText("Recording..."); 
-    //             setRecordingOn(true);
-    //         }
-    //     })
-
-    //     socket.on("stop-recording", () => {
-    //         setSessionId(null);
-    //         recorderRef.current?.stop();
-    //         setRecordingOn(false);
-    //         setRecordingStatusText("Start Recording"); 
-    //     });
-
-    //     socket.on("recording-error", ({ message }: { message: string }) => {
-    //         console.warn("Recording error:", message);
-    //         setRecordingStatusText("Start Recording"); 
-    //         alert(message);
-    //     });
-
-    //     return () => {
-    //         socket.disconnect();
-    //         if(recordingOn){
-    //             socket.emit("stop-recording");
-    //             recorderRef.current?.stop();
-    //             setRecordingStatusText("Start Recording"); 
-    //             setRecordingOn(false);
-    //         }
-    //     };
-        
-    // }, [userName, roomId]);
-
     const handleRemoteTrack = (event: RTCTrackEvent) => {
-        if (!remoteVideoRef.current) {
+        if(!remoteVideoRef.current){
             console.error("Cannot attach track: remoteVideoRef.current is null.");
             return;
         }
 
-        let remoteStream = remoteVideoRef.current.srcObject as MediaStream | null;
+        const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
 
-        if (!remoteStream) {
-            remoteStream = new MediaStream();
-            remoteVideoRef.current.srcObject = remoteStream;
+        if(existingStream){
+            existingStream.addTrack(event.track);
+        }else{
+            const newStream = new MediaStream([event.track]);
+            console.log("ADDING NEW MEDIASTREAM1", newStream);
+            console.log("All tracks in remote stream:", newStream.getTracks());
+            console.log("Video tracks in remote stream:", newStream.getVideoTracks());
+            remoteVideoRef.current.srcObject = newStream;
+            console.log("ADDING NEW MEDIASTREAM2", remoteVideoRef.current.srcObject);
+            
+            console.log("REMOTE VIDEO REF", remoteVideoRef.current);
+            remoteVideoRef.current.play()
+                .then(() => console.log("PLAYING"))
+                .catch(() => console.log("ERROR !!!!"));
         }
-
-        const trackAlreadyExists = remoteStream.getTracks().some(
-            (t) => t.id === event.track.id
-        );
-
-        if (!trackAlreadyExists) {
-            console.log("🔗 Adding remote track:", event.track.kind);
-            remoteStream.addTrack(event.track);
-        } else {
-            console.log("⚠️ Track already exists, skipping:", event.track.kind);
-        }
-
-        remoteVideoRef.current
-            .play()
-            .then(() => console.log("▶️ Remote video playing"))
-            .catch((err) => {
-                console.warn("⚠️ Error playing remote video:", err);
-            });
     };
 
-
-    useEffect(() => {
-        const init = async() => {
-            const socket: Socket = io(SERVER_URL);
-            setSocket(socket);
-
+    const getMedia = async () => {
+        
             const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
             const videoTrack = stream.getVideoTracks()[0];
             const audioTrack = stream.getAudioTracks()[0];
             localAudioTrackRef.current = audioTrack;
             localVideoTrackRef.current = videoTrack;
 
-            const uploader = new S3PresignedUploader(socket);
-            s3PresignedUploaderRef.current = uploader;
+            setLocalMediaStream(stream);
+            setMediaReady(true);
 
-            const recorder = createMediaRecorder(
-                stream, 
+            if(!localVideoRef.current) return;
+
+            localVideoRef.current.srcObject = new MediaStream([videoTrack]);
+            localVideoRef.current.play();
+
+    }
+
+    useEffect(() => {
+        getMedia();
+    }, []);
+
+    const initialiseS3presignedUploader = async() => {
+        if(!localMediaStream || !socket) return;
+        const uploader = new S3PresignedUploader(socket);
+        s3PresignedUploaderRef.current = uploader;
+
+        const recorder = createMediaRecorder(
+                localMediaStream, 
                 async (blob) => {
                     console.log(`Chunk received: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
                     if(!s3PresignedUploaderRef.current){
@@ -368,7 +110,7 @@ const Room = () => {
                         setTimeout(() => URL.revokeObjectURL(url), 100);
                     }
                 },
-                5000, // 5 seconds -> each chunk time
+                5000,
                 {
                     S3PresignedUploader: s3PresignedUploaderRef.current,
                     roomId: roomId,
@@ -376,164 +118,168 @@ const Room = () => {
                     enableLocalDownload: !s3PresignedUploaderRef.current
                 }
             );
-            recorderRef.current = recorder;
+        recorderRef.current = recorder;
+    }
 
-            if(localVideoRef.current){
-                localVideoRef.current.srcObject = new MediaStream([videoTrack]);
-                localVideoRef.current.play();
+    useEffect(() => {
+        initialiseS3presignedUploader();
+    }, [mediaReady, socket]);
+    
+
+    useEffect(() => {
+
+        if(!mediaReady) return;
+
+        const socket: Socket = io(SERVER_URL);
+        setSocket(socket);
+
+        socket.emit("join-room", {roomId, userName});
+        
+        socket.on("send-offer", async({roomId, remoteUserName} : {roomId : string, remoteUserName: string}) => {
+            setRemoteUserName(remoteUserName)
+            setLobby(false);
+            const pc = new RTCPeerConnection();
+            pc.ontrack = handleRemoteTrack;
+
+            const stream = new MediaStream();
+            if(localVideoTrackRef.current){
+                stream.addTrack(localVideoTrackRef.current);
+            }
+            if(localAudioTrackRef.current){
+                stream.addTrack(localAudioTrackRef.current);
             }
 
-            socket.emit("join-room", {roomId, userName});
-            
-            socket.on("send-offer", async({roomId, remoteUserName} : {roomId : string, remoteUserName: string}) => {
-                setRemoteUserName(remoteUserName)
-                setLobby(false);
-                const pc = new RTCPeerConnection();
+            stream.getTracks().forEach((track) => {
+                pc.addTrack(track, stream);
+            });
 
-                pc.ontrack = handleRemoteTrack;
-
-                const stream = new MediaStream();
-                if(localVideoTrackRef.current){
-                    stream.addTrack(localVideoTrackRef.current);
-                }
-                if(localAudioTrackRef.current){
-                    stream.addTrack(localAudioTrackRef.current);
-                }
-
-                stream.getTracks().forEach((track) => {
-                    pc.addTrack(track, stream);
-                });
-
-                pc.onicecandidate = (event) => {
-                    if(event.candidate){
-                        socket.emit("add-ice-candidate", {
-                            candidate: event.candidate,
-                            roomId: roomId,
-                            type: "sender",
-                        })
-                    }
-                }
-
-                pc.onnegotiationneeded = async() => {
-                    console.log(("NEGOTIATION DONE"));
-                    const sdp = await pc.createOffer();
-                    await pc.setLocalDescription(sdp);
-                    socket.emit("offer", {sdp, roomId});
-                }
-
-                senderPcRef.current = pc;
-            })
-
-            socket.on("offer", async({remoteSdp, roomId} : {remoteSdp: RTCSessionDescriptionInit, roomId: string}) => {
-                setLobby(false);
-                const pc = new RTCPeerConnection();
-
-                pc.ontrack = handleRemoteTrack;
-
-                const stream = new MediaStream();
-                if(localVideoTrackRef.current){
-                    stream.addTrack(localVideoTrackRef.current);
-                }
-                if(localAudioTrackRef.current){
-                    stream.addTrack(localAudioTrackRef.current);
-                }
-
-                stream.getTracks().forEach((track) => {
-                    pc.addTrack(track, stream);
-                });
-
-                await pc.setRemoteDescription(new RTCSessionDescription(remoteSdp));
-                const sdp = await pc.createAnswer();
-                await pc.setLocalDescription(sdp);
-
-                pc.onicecandidate = (event) => {
-                    if(!event.candidate) return;
-
+            pc.onicecandidate = (event) => {
+                if(event.candidate){
                     socket.emit("add-ice-candidate", {
                         candidate: event.candidate,
                         roomId: roomId,
-                        type: "receiver",
+                        type: "sender",
                     })
                 }
+            }
 
-                receiverPcRef.current = pc;
+            pc.onnegotiationneeded = async() => {
+                console.log(("NEGOTIATION DONE"));
+                const sdp = await pc.createOffer();
+                await pc.setLocalDescription(sdp);
+                socket.emit("offer", {sdp, roomId});
+            }
 
-                socket.emit("answer", {
-                    sdp,
-                    roomId,
-                })
-            })
+            senderPcRef.current = pc;
+        })
 
-            socket.on("answer", ({remoteSdp} : {remoteSdp: RTCSessionDescriptionInit}) => {
-                setLobby(false);
-                senderPcRef.current?.setRemoteDescription(remoteSdp);
-            })
+        socket.on("offer", async({remoteSdp, roomId} : {remoteSdp: RTCSessionDescriptionInit, roomId: string}) => {
+            setLobby(false);
+            const pc = new RTCPeerConnection();
 
-            socket.on("lobby", () => {
-                setLobby(true);
-            })
+            pc.ontrack = handleRemoteTrack;
 
-            socket.on("add-ice-candidate", ({ candidate, type}) => {
-                if(type === "sender"){
-                    receiverPcRef?.current?.addIceCandidate(candidate);
-                }else{
-                    senderPcRef?.current?.addIceCandidate(candidate);
-                }
+            const stream = new MediaStream();
+            if(localVideoTrackRef.current){
+                stream.addTrack(localVideoTrackRef.current);
+            }
+            if(localAudioTrackRef.current){
+                stream.addTrack(localAudioTrackRef.current);
+            }
+
+            stream.getTracks().forEach((track) => {
+                pc.addTrack(track, stream);
             });
 
-            socket.on("start-recording-at",({startTime, sessionId}: {startTime: number, sessionId: string}) => {
-                const delay = startTime - Date.now();
-                setSessionId(sessionId);
-                toast("Copy the SessionId shown, to later access your recording");
+            await pc.setRemoteDescription(new RTCSessionDescription(remoteSdp));
+            const sdp = await pc.createAnswer();
+            await pc.setLocalDescription(sdp);
 
-                if(s3PresignedUploaderRef.current){
-                    s3PresignedUploaderRef.current.setSessionId(sessionId);
-                }
+            pc.onicecandidate = (event) => {
+                if(!event.candidate) return;
 
-                if(delay > 0){
-                    console.log("Start the Recording After Delay:",delay);
-                    setRecordingStatusText("Starting Recording...");
-                    setTimeout(() => {
-                        console.log("SHOULD START NOW");
-                        recorderRef.current?.start();
-                        setRecordingStatusText("Recording..."); 
-                        setRecordingOn(true);
-                    }, delay)
-                }else{
-                    console.log("Recording Start time passed, start now");
+                socket.emit("add-ice-candidate", {
+                    candidate: event.candidate,
+                    roomId: roomId,
+                    type: "receiver",
+                })
+            }
+
+            receiverPcRef.current = pc;
+
+            socket.emit("answer", {
+                sdp,
+                roomId,
+            })
+        })
+
+        socket.on("answer", ({remoteSdp} : {remoteSdp: RTCSessionDescriptionInit}) => {
+            setLobby(false);
+            senderPcRef.current?.setRemoteDescription(remoteSdp);
+        })
+
+        socket.on("lobby", () => {
+            setLobby(true);
+        })
+
+        socket.on("add-ice-candidate", ({ candidate, type}) => {
+            if(type === "sender"){
+                receiverPcRef?.current?.addIceCandidate(candidate);
+            }else{
+                senderPcRef?.current?.addIceCandidate(candidate);
+            }
+        });
+
+        socket.on("start-recording-at",({startTime, sessionId}: {startTime: number, sessionId: string}) => {
+            const delay = startTime - Date.now();
+            setSessionId(sessionId);
+            toast("Copy the SessionId shown, to later access your recording");
+
+            if(s3PresignedUploaderRef.current){
+                s3PresignedUploaderRef.current.setSessionId(sessionId);
+            }
+
+            if(delay > 0){
+                console.log("Start the Recording After Delay:",delay);
+                setRecordingStatusText("Starting Recording...");
+                setTimeout(() => {
+                    console.log("SHOULD START NOW");
                     recorderRef.current?.start();
                     setRecordingStatusText("Recording..."); 
                     setRecordingOn(true);
-                }
-            })
+                }, delay)
+            }else{
+                console.log("Recording Start time passed, start now");
+                recorderRef.current?.start();
+                setRecordingStatusText("Recording..."); 
+                setRecordingOn(true);
+            }
+        })
 
-            socket.on("stop-recording", () => {
-                setSessionId(null);
+        socket.on("stop-recording", () => {
+            setSessionId(null);
+            recorderRef.current?.stop();
+            setRecordingOn(false);
+            setRecordingStatusText("Start Recording"); 
+        });
+
+        socket.on("recording-error", ({ message }: { message: string }) => {
+            console.warn("Recording error:", message);
+            setRecordingStatusText("Start Recording"); 
+            alert(message);
+        });
+
+        return () => {
+            socket.disconnect();
+            if(recordingOn){
+                socket.emit("stop-recording");
                 recorderRef.current?.stop();
+                setRecordingStatusText("Start Recording"); 
                 setRecordingOn(false);
-                setRecordingStatusText("Start Recording"); 
-            });
-
-            socket.on("recording-error", ({ message }: { message: string }) => {
-                console.warn("Recording error:", message);
-                setRecordingStatusText("Start Recording"); 
-                alert(message);
-            });
-
-            return () => {
-                socket.disconnect();
-                if(recordingOn){
-                    socket.emit("stop-recording");
-                    recorderRef.current?.stop();
-                    setRecordingStatusText("Start Recording"); 
-                    setRecordingOn(false);
-                }
-            };
-        }
-
-        init();
+            }
+        };
         
-    }, [userName, roomId]);
+    }, [mediaReady]);
 
     const recordingHandler = () => {
         if(!socket) return;
@@ -547,24 +293,6 @@ const Room = () => {
             socket.emit("prepare-for-recording", {roomId, startTime});
         }
     }
-
-    // useEffect(() => {
-    //     getMedia();
-    // },[]);
-
-    // useEffect(() => {
-    //     try{
-    //         console.log("dsfd");
-    //         if(!socket) return; 
-    //         const uploader = new S3PresignedUploader(socket);
-    //         s3PresignedUploaderRef.current = uploader;
-    //         console.log("S3 pre-signed uploader initialized");
-    //         // getMedia();
-    //     }catch(error){
-    //         console.error('Failed to initialize S3 uploader:', error);
-    //     }
-    // }, [socket]);
-
 
     return (
         <div className="relative pb-[3rem] w-[100vw] min-h-[calc(100vh-4rem)] bg-black text-white flex flex-col items-center gap-[2rem]">
