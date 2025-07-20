@@ -52,6 +52,7 @@ const Room = () => {
         const kind = event.track.kind;
         console.log("TRACK", event.track);
         console.log("Track:", event.track.kind, "- muted:", event.track.muted);
+        console.log("Muted snapshot:", JSON.parse(JSON.stringify({ muted: track.muted })));
 
         if (!remoteVideoRef.current || !remoteMediaStreamRef.current) {
             return;
