@@ -75,23 +75,40 @@ const Room = () => {
     // };
 
     const handleRemoteTrack = (event: RTCTrackEvent) => {
-        console.log(`Received remote track: ${event.track.kind}`);
+        const kind = event.track.kind;
+        console.log(`Received remote track: ${kind}`);
 
         if (!remoteVideoRef.current || !remoteMediaStreamRef.current) {
             return;
         }
 
-        // 1. Add the incoming track to your persistent stream object
-        remoteMediaStreamRef.current.addTrack(event.track);
-        console.log("Remote Stream Tracks:", remoteMediaStreamRef.current.getTracks());
+        const stream = remoteMediaStreamRef.current;
 
-        // 2. If the video element doesn't have a source yet, assign our stream to it
+        // 🔁 Remove existing track of the same kind
+        const existingTracks = kind === "video" ? stream.getVideoTracks() : stream.getAudioTracks();
+
+        existingTracks.forEach(track => {
+            stream.removeTrack(track);
+            console.log(`Removed existing ${kind} track:`, track.id);
+        });
+
+        // ➕ Add the new track
+        stream.addTrack(event.track);
+        console.log("Remote Stream Tracks (after add):", stream.getTracks());
+
+        // 🎥 Assign stream to video element if not already set
         if (!remoteVideoRef.current.srcObject) {
-            remoteVideoRef.current.srcObject = remoteMediaStreamRef.current;
-            
-            remoteVideoRef.current.play();
+            remoteVideoRef.current.srcObject = stream;
+        }
+
+        // ⏯ Ensure video is playing
+        if (kind === "video") {
+            remoteVideoRef.current.play().catch((err) =>
+                console.error("Remote video play error:", err)
+            );
         }
     };
+
 
     const getMedia = async () => {
         
