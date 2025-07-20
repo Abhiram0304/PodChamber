@@ -26,7 +26,7 @@ export class RoomManager {
             // secondUser.socket.emit("send-offer", { roomId, remoteUserName: firstUserName });
             setTimeout(() => {
                 firstUser.socket.emit("send-offer", { roomId, remoteUserName: secondUserName });
-                secondUser.socket.emit("send-offer", { roomId, remoteUserName: firstUserName });
+                // secondUser.socket.emit("send-offer", { roomId, remoteUserName: firstUserName });
             }, 1000);
         }
     }
