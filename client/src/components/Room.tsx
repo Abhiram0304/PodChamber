@@ -172,16 +172,36 @@ const Room = () => {
             const pc = new RTCPeerConnection();
             pc.ontrack = handleRemoteTrack;
 
+            // const stream = new MediaStream();
+            // if(localVideoTrackRef.current){
+            //     stream.addTrack(localVideoTrackRef.current);
+            // }
+            // if(localAudioTrackRef.current){
+            //     stream.addTrack(localAudioTrackRef.current);
+            // }
+
+            // stream.getTracks().forEach((track) => {
+            //     pc.addTrack(track, stream);
+            // });
+
             const stream = new MediaStream();
-            if(localVideoTrackRef.current){
+            if (localVideoTrackRef.current) {
                 stream.addTrack(localVideoTrackRef.current);
             }
-            if(localAudioTrackRef.current){
+            if (localAudioTrackRef.current) {
                 stream.addTrack(localAudioTrackRef.current);
             }
 
             stream.getTracks().forEach((track) => {
-                pc.addTrack(track, stream);
+                // Check if a sender for this track's kind already exists to prevent duplicates
+                const senderExists = pc.getSenders().some(sender => sender.track?.kind === track.kind);
+
+                if (!senderExists) {
+                    console.log(`Adding new ${track.kind} track to peer connection.`);
+                    pc.addTrack(track, stream);
+                } else {
+                    console.log(`Skipping addTrack: A ${track.kind} track is already present.`);
+                }
             });
 
             pc.onicecandidate = (event) => {
@@ -210,16 +230,36 @@ const Room = () => {
 
             pc.ontrack = handleRemoteTrack;
 
+            // const stream = new MediaStream();
+            // if(localVideoTrackRef.current){
+            //     stream.addTrack(localVideoTrackRef.current);
+            // }
+            // if(localAudioTrackRef.current){
+            //     stream.addTrack(localAudioTrackRef.current);
+            // }
+
+            // stream.getTracks().forEach((track) => {
+            //     pc.addTrack(track, stream);
+            // });
+
             const stream = new MediaStream();
-            if(localVideoTrackRef.current){
+            if (localVideoTrackRef.current) {
                 stream.addTrack(localVideoTrackRef.current);
             }
-            if(localAudioTrackRef.current){
+            if (localAudioTrackRef.current) {
                 stream.addTrack(localAudioTrackRef.current);
             }
 
             stream.getTracks().forEach((track) => {
-                pc.addTrack(track, stream);
+                // Check if a sender for this track's kind already exists to prevent duplicates
+                const senderExists = pc.getSenders().some(sender => sender.track?.kind === track.kind);
+
+                if (!senderExists) {
+                    console.log(`Adding new ${track.kind} track to peer connection.`);
+                    pc.addTrack(track, stream);
+                } else {
+                    console.log(`Skipping addTrack: A ${track.kind} track is already present.`);
+                }
             });
 
             await pc.setRemoteDescription(new RTCSessionDescription(remoteSdp));
