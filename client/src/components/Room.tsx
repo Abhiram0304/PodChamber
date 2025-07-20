@@ -49,35 +49,29 @@ const Room = () => {
     }, [audioMuted, videoMuted]);
 
     const handleRemoteTrack = (event: RTCTrackEvent) => {
-        const kind = event.track.kind;
-        const track = event.track;
+        if(!remoteVideoRef.current) return;
 
-        console.log("TRACK", track);
-
-        if (!remoteVideoRef.current || !remoteMediaStreamRef.current) return;
+        if(!remoteMediaStreamRef.current) {
+            remoteMediaStreamRef.current = new MediaStream();
+        }
 
         const stream = remoteMediaStreamRef.current;
+        stream.addTrack(event.track);
 
-        const existingTracks = kind === "video" ? stream.getVideoTracks() : stream.getAudioTracks();
-        existingTracks.forEach((t) => stream.removeTrack(t));
-
-        stream.addTrack(track);
-
-        if (!remoteVideoRef.current.srcObject) {
+        if(!remoteVideoRef.current.srcObject){
             remoteVideoRef.current.srcObject = stream;
         }
 
-        if (kind === "video") {
-            remoteVideoRef.current
-                .play()
-                .then(() => {
-                    console.log("Remote video started playing");
-                })
-                .catch((err) => {
-                    console.error("Remote video play error:", err);
-                });
-        }
+        remoteVideoRef.current
+            .play()
+            .then(() => {
+                console.log("Remote video started playing");
+            })
+            .catch((err) => {
+                console.error("Remote video play error:", err);
+            });
     };
+
 
 
 
