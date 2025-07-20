@@ -54,6 +54,7 @@ const Room = () => {
             return;
         }
 
+        console.log("EVENT 1", event);
         const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
 
         if(existingStream){
