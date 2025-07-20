@@ -50,6 +50,7 @@ const Room = () => {
 
     const handleRemoteTrack = (event: RTCTrackEvent) => {
         const kind = event.track.kind;
+        console.log("TRACK", event.track);
         console.log(`Track: ${kind} - ${event.track.muted}`);
 
         if (!remoteVideoRef.current || !remoteMediaStreamRef.current) {
