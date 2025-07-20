@@ -48,35 +48,9 @@ const Room = () => {
         }
     }, [audioMuted, videoMuted]);
 
-    // const handleRemoteTrack = (event: RTCTrackEvent) => {
-    //     if(!remoteVideoRef.current){
-    //         console.error("Cannot attach track: remoteVideoRef.current is null.");
-    //         return;
-    //     }
-
-    //     console.log("EVENT 1", event);
-    //     const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
-
-    //     if(existingStream){
-    //         existingStream.addTrack(event.track);
-    //     }else{
-    //         const newStream = new MediaStream([event.track]);
-    //         console.log("ADDING NEW MEDIASTREAM1", newStream);
-    //         console.log("All tracks in remote stream:", newStream.getTracks());
-    //         console.log("Video tracks in remote stream:", newStream.getVideoTracks());
-    //         remoteVideoRef.current.srcObject = newStream;
-    //         console.log("ADDING NEW MEDIASTREAM2", remoteVideoRef.current.srcObject);
-            
-    //         console.log("REMOTE VIDEO REF", remoteVideoRef.current);
-    //         remoteVideoRef.current.play()
-    //             .then(() => console.log("PLAYING"))
-    //             .catch(() => console.log("ERROR !!!!"));
-    //     }
-    // };
-
     const handleRemoteTrack = (event: RTCTrackEvent) => {
         const kind = event.track.kind;
-        console.log(`Received remote track: ${kind}`);
+        console.log(`Track: ${kind} - ${event.track.muted}`);
 
         if (!remoteVideoRef.current || !remoteMediaStreamRef.current) {
             return;
@@ -84,24 +58,18 @@ const Room = () => {
 
         const stream = remoteMediaStreamRef.current;
 
-        // 🔁 Remove existing track of the same kind
         const existingTracks = kind === "video" ? stream.getVideoTracks() : stream.getAudioTracks();
 
         existingTracks.forEach(track => {
             stream.removeTrack(track);
-            console.log(`Removed existing ${kind} track:`, track.id);
         });
 
-        // ➕ Add the new track
         stream.addTrack(event.track);
-        console.log("Remote Stream Tracks (after add):", stream.getTracks());
 
-        // 🎥 Assign stream to video element if not already set
         if (!remoteVideoRef.current.srcObject) {
             remoteVideoRef.current.srcObject = stream;
         }
 
-        // ⏯ Ensure video is playing
         if (kind === "video") {
             remoteVideoRef.current.play().catch((err) =>
                 console.error("Remote video play error:", err)
@@ -111,14 +79,12 @@ const Room = () => {
 
 
     const getMedia = async () => {
-        
             const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
             const videoTrack = stream.getVideoTracks()[0];
             const audioTrack = stream.getAudioTracks()[0];
             localAudioTrackRef.current = audioTrack;
             localVideoTrackRef.current = videoTrack;
 
-            console.log("Stream");
             setLocalMediaStream(stream);
 
             if(!localVideoRef.current) return;
@@ -206,7 +172,6 @@ const Room = () => {
             }
 
             pc.onnegotiationneeded = async() => {
-                console.log(("NEGOTIATION DONE"));
                 const sdp = await pc.createOffer();
                 await pc.setLocalDescription(sdp);
                 socket.emit("offer", {sdp, roomId});
@@ -282,16 +247,13 @@ const Room = () => {
             }
 
             if(delay > 0){
-                console.log("Start the Recording After Delay:",delay);
                 setRecordingStatusText("Starting Recording...");
                 setTimeout(() => {
-                    console.log("SHOULD START NOW");
                     recorderRef.current?.start();
                     setRecordingStatusText("Recording..."); 
                     setRecordingOn(true);
                 }, delay)
             }else{
-                console.log("Recording Start time passed, start now");
                 recorderRef.current?.start();
                 setRecordingStatusText("Recording..."); 
                 setRecordingOn(true);
