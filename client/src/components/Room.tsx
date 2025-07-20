@@ -78,23 +78,18 @@ const Room = () => {
         console.log(`Received remote track: ${event.track.kind}`);
 
         if (!remoteVideoRef.current || !remoteMediaStreamRef.current) {
-            console.error("Remote refs are not available.");
             return;
         }
 
         // 1. Add the incoming track to your persistent stream object
         remoteMediaStreamRef.current.addTrack(event.track);
+        console.log("Remote Stream Tracks:", remoteMediaStreamRef.current.getTracks());
 
         // 2. If the video element doesn't have a source yet, assign our stream to it
         if (!remoteVideoRef.current.srcObject) {
-            console.log("Attaching remote stream to video element.");
             remoteVideoRef.current.srcObject = remoteMediaStreamRef.current;
             
-            // Autoplay might be blocked, so it's good practice to handle the promise
-            remoteVideoRef.current.play().catch(error => {
-                console.error("Error attempting to play remote video:", error);
-                // You might want to show a "Click to play" button here
-            });
+            remoteVideoRef.current.play();
         }
     };
 
@@ -160,7 +155,6 @@ const Room = () => {
     useEffect(() => {
 
         if(!mediaReady) return;
-        console.log("IN SOCKET");
         const socket: Socket = io(SERVER_URL);
         setSocket(socket);
 
@@ -172,36 +166,16 @@ const Room = () => {
             const pc = new RTCPeerConnection();
             pc.ontrack = handleRemoteTrack;
 
-            // const stream = new MediaStream();
-            // if(localVideoTrackRef.current){
-            //     stream.addTrack(localVideoTrackRef.current);
-            // }
-            // if(localAudioTrackRef.current){
-            //     stream.addTrack(localAudioTrackRef.current);
-            // }
-
-            // stream.getTracks().forEach((track) => {
-            //     pc.addTrack(track, stream);
-            // });
-
             const stream = new MediaStream();
-            if (localVideoTrackRef.current) {
+            if(localVideoTrackRef.current){
                 stream.addTrack(localVideoTrackRef.current);
             }
-            if (localAudioTrackRef.current) {
+            if(localAudioTrackRef.current){
                 stream.addTrack(localAudioTrackRef.current);
             }
 
             stream.getTracks().forEach((track) => {
-                // Check if a sender for this track's kind already exists to prevent duplicates
-                const senderExists = pc.getSenders().some(sender => sender.track?.kind === track.kind);
-
-                if (!senderExists) {
-                    console.log(`Adding new ${track.kind} track to peer connection.`);
-                    pc.addTrack(track, stream);
-                } else {
-                    console.log(`Skipping addTrack: A ${track.kind} track is already present.`);
-                }
+                pc.addTrack(track, stream);
             });
 
             pc.onicecandidate = (event) => {
@@ -230,36 +204,16 @@ const Room = () => {
 
             pc.ontrack = handleRemoteTrack;
 
-            // const stream = new MediaStream();
-            // if(localVideoTrackRef.current){
-            //     stream.addTrack(localVideoTrackRef.current);
-            // }
-            // if(localAudioTrackRef.current){
-            //     stream.addTrack(localAudioTrackRef.current);
-            // }
-
-            // stream.getTracks().forEach((track) => {
-            //     pc.addTrack(track, stream);
-            // });
-
             const stream = new MediaStream();
-            if (localVideoTrackRef.current) {
+            if(localVideoTrackRef.current){
                 stream.addTrack(localVideoTrackRef.current);
             }
-            if (localAudioTrackRef.current) {
+            if(localAudioTrackRef.current){
                 stream.addTrack(localAudioTrackRef.current);
             }
 
             stream.getTracks().forEach((track) => {
-                // Check if a sender for this track's kind already exists to prevent duplicates
-                const senderExists = pc.getSenders().some(sender => sender.track?.kind === track.kind);
-
-                if (!senderExists) {
-                    console.log(`Adding new ${track.kind} track to peer connection.`);
-                    pc.addTrack(track, stream);
-                } else {
-                    console.log(`Skipping addTrack: A ${track.kind} track is already present.`);
-                }
+                pc.addTrack(track, stream);
             });
 
             await pc.setRemoteDescription(new RTCSessionDescription(remoteSdp));
