@@ -49,6 +49,7 @@ const Room = () => {
     }, [audioMuted, videoMuted]);
 
     const handleRemoteTrack = (event: RTCTrackEvent) => {
+        console.log("TRACK", event.track);
         if(!remoteVideoRef.current) return;
 
         if(!remoteMediaStreamRef.current) {
