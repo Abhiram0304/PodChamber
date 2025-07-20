@@ -76,38 +76,41 @@ const Room = () => {
 
     const handleRemoteTrack = (event: RTCTrackEvent) => {
         const kind = event.track.kind;
-        console.log(`Received remote track: ${kind}`);
+        const isMuted = event.track.muted;
+        console.log(`Received remote ${kind} track | muted: ${isMuted} | id: ${event.track.id}`);
 
-        if (!remoteVideoRef.current || !remoteMediaStreamRef.current) {
-            return;
-        }
+        if (!remoteVideoRef.current || !remoteMediaStreamRef.current) return;
 
         const stream = remoteMediaStreamRef.current;
 
-        // 🔁 Remove existing track of the same kind
         const existingTracks = kind === "video" ? stream.getVideoTracks() : stream.getAudioTracks();
+        const existingTrack = existingTracks[0]; 
 
-        existingTracks.forEach(track => {
-            stream.removeTrack(track);
-            console.log(`Removed existing ${kind} track:`, track.id);
-        });
+        if (!existingTrack) {
+            stream.addTrack(event.track);
+            console.log(`No existing ${kind}, added: ${event.track.id}`);
+        } else if (existingTrack.muted && !isMuted) {
+            stream.removeTrack(existingTrack);
+            stream.addTrack(event.track);
+            console.log(`Replaced muted ${kind} (${existingTrack.id}) with unmuted (${event.track.id})`);
+        } else {
+            console.log(`Keeping existing ${kind}: ${existingTrack.id}, ignored new: ${event.track.id}`);
+            return;
+        }
 
-        // ➕ Add the new track
-        stream.addTrack(event.track);
-        console.log("Remote Stream Tracks (after add):", stream.getTracks());
+        console.log("🎞️ Remote Stream Tracks:", stream.getTracks());
 
-        // 🎥 Assign stream to video element if not already set
         if (!remoteVideoRef.current.srcObject) {
             remoteVideoRef.current.srcObject = stream;
         }
 
-        // ⏯ Ensure video is playing
         if (kind === "video") {
             remoteVideoRef.current.play().catch((err) =>
                 console.error("Remote video play error:", err)
             );
         }
     };
+
 
 
     const getMedia = async () => {
