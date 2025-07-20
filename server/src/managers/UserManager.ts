@@ -58,12 +58,22 @@ export class UserManager {
         })
 
         socket.on("get-presigned-url", async (
-            { roomId, userName, chunkIndex, sessionId },
+            { roomId, userName, chunkIndex, sessionId } : { roomId: string, userName: string, chunkIndex: number, sessionId: string },
             callback
         ) => {
             const result = await s3Uploader({ roomId, userName, chunkIndex, sessionId });
             callback(result);
         });
+
+        socket.on("request-end-call", async(
+            { roomId } : { roomId: string }
+        ) => {
+                const room = this.roomManager.getRoomById(roomId);
+                room?.users.forEach((user) => {
+                    user.socket.emit("confirm-end-call");
+                })
+            }
+        )
     }
 
 

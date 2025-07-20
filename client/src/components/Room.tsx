@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import createMediaRecorder from "../utilities/MediaRecorder";
 import type { RecorderType } from "../types";
-import { BsMic, BsMicMute, BsCameraVideo, BsCameraVideoOff } from 'react-icons/bs';
+import { BsMic, BsMicMute, BsCameraVideo, BsCameraVideoOff, BsTelephoneX } from 'react-icons/bs';
 import { S3PresignedUploader } from "../utilities/S3uploader";
 import { SERVER_URL } from "../services/APIs";
 import toast from "react-hot-toast";
 import { FiCopy } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
 const Room = () => {
 
@@ -35,6 +36,8 @@ const Room = () => {
     const [localMediaStream, setLocalMediaStream] = useState<MediaStream | null>(null);
     const remoteMediaStreamRef = useRef<MediaStream | null>(new MediaStream());
 
+    const navigate = useNavigate();
+
 
     useEffect(() => {
         if(localVideoTrackRef.current){
@@ -45,70 +48,30 @@ const Room = () => {
         }
     }, [audioMuted, videoMuted]);
 
-    // const handleRemoteTrack = (event: RTCTrackEvent) => {
-    //     if(!remoteVideoRef.current){
-    //         console.error("Cannot attach track: remoteVideoRef.current is null.");
-    //         return;
-    //     }
-
-    //     const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
-
-    //     if(existingStream){
-    //         existingStream.addTrack(event.track);
-    //     }else{
-    //         const newStream = new MediaStream([event.track]);
-    //         console.log("ADDING NEW MEDIASTREAM1", newStream);
-    //         console.log("All tracks in remote stream:", newStream.getTracks());
-    //         console.log("Video tracks in remote stream:", newStream.getVideoTracks());
-    //         remoteVideoRef.current.srcObject = newStream;
-    //         console.log("ADDING NEW MEDIASTREAM2", remoteVideoRef.current.srcObject);
-            
-    //         console.log("REMOTE VIDEO REF", remoteVideoRef.current);
-    //         remoteVideoRef.current.play()
-    //             .then(() => console.log("PLAYING"))
-    //             .catch(() => console.log("ERROR !!!!"));
-    //     }
-    // };
-
     const handleRemoteTrack = (event: RTCTrackEvent) => {
-        const track = event.track;
-
-        if (!remoteMediaStreamRef.current) {
-            remoteMediaStreamRef.current = new MediaStream();
+        if(!remoteVideoRef.current){
+            console.error("Cannot attach track: remoteVideoRef.current is null.");
+            return;
         }
 
-        // Check for existing track with same kind and same ID
-        const alreadyPresent = remoteMediaStreamRef.current
-            .getTracks()
-            .some((t) => t.id === track.id);
+        const existingStream = remoteVideoRef.current.srcObject as MediaStream | null;
 
-        if (!alreadyPresent) {
-            // Optionally ensure only 1 track of each kind
-            if (track.kind === 'video') {
-            // Remove all old video tracks before adding
-            remoteMediaStreamRef.current.getVideoTracks().forEach((t) => {
-                remoteMediaStreamRef.current?.removeTrack(t);
-            });
-            } else if (track.kind === 'audio') {
-            remoteMediaStreamRef.current.getAudioTracks().forEach((t) => {
-                remoteMediaStreamRef.current?.removeTrack(t);
-            });
-            }
-
-            // Only add the new track if it's not muted (optional)
-            if (!track.muted || track.kind === "audio") {
-            remoteMediaStreamRef.current.addTrack(track);
-            }
-
-            // Assign stream
-            if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = remoteMediaStreamRef.current;
-            remoteVideoRef.current.play().catch((err) =>
-                console.error("Error playing remote video:", err)
-            );
-            }
+        if(existingStream){
+            existingStream.addTrack(event.track);
+        }else{
+            const newStream = new MediaStream([event.track]);
+            console.log("ADDING NEW MEDIASTREAM1", newStream);
+            console.log("All tracks in remote stream:", newStream.getTracks());
+            console.log("Video tracks in remote stream:", newStream.getVideoTracks());
+            remoteVideoRef.current.srcObject = newStream;
+            console.log("ADDING NEW MEDIASTREAM2", remoteVideoRef.current.srcObject);
+            
+            console.log("REMOTE VIDEO REF", remoteVideoRef.current);
+            remoteVideoRef.current.play()
+                .then(() => console.log("PLAYING"))
+                .catch(() => console.log("ERROR !!!!"));
         }
-        };
+    };
 
 
 
@@ -314,6 +277,29 @@ const Room = () => {
             alert(message);
         });
 
+        socket.on("confirm-end-call", () => {
+            setRemoteUserName(null);
+            setSessionId(null);
+            setLobby(true);
+            setMediaReady(false);
+            localVideoTrackRef.current = null;
+            localAudioTrackRef.current = null;
+            remoteMediaStreamRef.current = new MediaStream();
+            if(remoteVideoRef.current) {
+                remoteVideoRef.current.srcObject = null;
+            }
+            if(localVideoRef.current) {
+                localVideoRef.current.srcObject = null;
+            }
+            senderPcRef.current?.close();
+            receiverPcRef.current?.close();
+            senderPcRef.current = null;
+            receiverPcRef.current = null;
+            socket.disconnect();
+            navigate("/");
+            toast.success("Call ended successfully");
+        })
+
         return () => {
             socket.disconnect();
             if(recordingOn){
@@ -337,6 +323,21 @@ const Room = () => {
             const startTime = Date.now() + 5000;
             socket.emit("prepare-for-recording", {roomId, startTime});
         }
+    }
+
+    const handleEndCall = () => {
+        if(!socket) return;
+
+        if(recordingOn){
+            toast.error("Recording is ongoing, please wait exactly 5 mins before ending the call, to get the recording uploaded");
+            socket.emit("stop-recording", {roomId});
+            recorderRef.current?.stop();
+            setRecordingStatusText("Start Recording"); 
+            setRecordingOn(false);
+            return;
+        }
+
+        socket.emit("request-end-call", {roomId});
     }
 
     return (
@@ -462,6 +463,17 @@ const Room = () => {
                     {videoMuted && (
                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900"></div>
                     )}
+                </button>
+
+                <button
+                    onClick={handleEndCall}
+                    className="
+                        w-14 cursor-pointer h-14 rounded-full flex items-center justify-center bg-red-700 hover:bg-red-800
+                        transition-all duration-200 ease-in-out transform hover:scale-105 shadow-lg shadow-red-600/30
+                    "
+                    title="End Call"
+                >
+                    <BsTelephoneX className="w-6 h-6 text-white rotate-135" />
                 </button>
             </div>
 
