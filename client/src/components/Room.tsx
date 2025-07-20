@@ -50,34 +50,51 @@ const Room = () => {
 
     const handleRemoteTrack = (event: RTCTrackEvent) => {
         const kind = event.track.kind;
-        console.log("TRACK", event.track);
-        console.log("Track:", event.track.kind, "- muted:", event.track.muted);
-        console.log("Muted snapshot:", JSON.parse(JSON.stringify({ muted: event.track.muted })));
+        const track = event.track;
 
-        if (!remoteVideoRef.current || !remoteMediaStreamRef.current) {
-            return;
-        }
+        console.log("TRACK", track);
+        console.log(`Track kind: ${kind}, muted: ${track.muted}`);
+        console.log("Muted snapshot:", JSON.parse(JSON.stringify({ muted: track.muted })));
+
+        if (!remoteVideoRef.current || !remoteMediaStreamRef.current) return;
 
         const stream = remoteMediaStreamRef.current;
 
+        // 🔄 Remove existing tracks of the same kind (audio or video)
         const existingTracks = kind === "video" ? stream.getVideoTracks() : stream.getAudioTracks();
+        existingTracks.forEach((t) => stream.removeTrack(t));
 
-        existingTracks.forEach(track => {
-            stream.removeTrack(track);
-        });
+        // ➕ Add the new track
+        stream.addTrack(track);
 
-        stream.addTrack(event.track);
-
+        // 🎯 Set srcObject only once
         if (!remoteVideoRef.current.srcObject) {
             remoteVideoRef.current.srcObject = stream;
         }
 
+        // 🎧 Handle audio and video separately
+        if (kind === "audio") {
+            track.onunmute = () => {
+                console.log("✅ Remote audio track is unmuted and receiving data");
+                // Optional: play dummy audio if needed (for pure audio streams)
+            };
+            track.onmute = () => {
+                console.warn("⚠️ Remote audio track was muted (no data flowing)");
+            };
+        }
+
         if (kind === "video") {
-            remoteVideoRef.current.play().catch((err) =>
-                console.error("Remote video play error:", err)
-            );
+            remoteVideoRef.current
+                .play()
+                .then(() => {
+                    console.log("📺 Remote video started playing");
+                })
+                .catch((err) => {
+                    console.error("❌ Remote video play error:", err);
+                });
         }
     };
+
 
 
     const getMedia = async () => {
