@@ -100,15 +100,13 @@ const Room = () => {
 
         console.log("🎞️ Remote Stream Tracks:", stream.getTracks());
 
-        if (!remoteVideoRef.current.srcObject) {
+        if(!remoteVideoRef.current.srcObject){
             remoteVideoRef.current.srcObject = stream;
         }
 
-        if (kind === "video") {
-            remoteVideoRef.current.play().catch((err) =>
-                console.error("Remote video play error:", err)
-            );
-        }
+        remoteVideoRef.current.play().catch((err) =>
+            console.error("Remote video play error:", err)
+        );
     };
 
 
