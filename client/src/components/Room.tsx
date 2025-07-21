@@ -51,6 +51,9 @@ const Room = () => {
     const [localMediaStream, setLocalMediaStream] = useState<MediaStream | null>(null);
     const remoteMediaStreamRef = useRef<MediaStream | null>(new MediaStream());
 
+    const senderIceCandidatesBufferRef = useRef<RTCIceCandidateInit[]>([]);
+    const receiverIceCandidatesBufferRef = useRef<RTCIceCandidateInit[]>([]);
+
     const navigate = useNavigate();
 
 
@@ -172,6 +175,11 @@ const Room = () => {
         socket.on("send-offer", async({roomId} : {roomId : string}) => {
             setLobby(false);
             const pc = new RTCPeerConnection(rtcConfig);
+
+            pc.onconnectionstatechange = () => {
+                console.log(`SENDER PC Connection State: ${pc.connectionState}`);
+            };
+
             pc.ontrack = handleRemoteTrack;
 
             if(!localMediaStream) return;
@@ -203,6 +211,10 @@ const Room = () => {
             setLobby(false);
             const pc = new RTCPeerConnection(rtcConfig);
 
+            pc.onconnectionstatechange = () => {
+                console.log(`RECEIVER PC Connection State: ${pc.connectionState}`);
+            };
+
             pc.ontrack = handleRemoteTrack;
 
             if (!localMediaStream) return;
@@ -212,6 +224,13 @@ const Room = () => {
             });
 
             await pc.setRemoteDescription(new RTCSessionDescription(remoteSdp));
+
+            receiverIceCandidatesBufferRef.current.forEach(candidate => {
+                console.log("Applying buffered ICE candidate for receiver");
+                pc.addIceCandidate(candidate);
+            });
+            receiverIceCandidatesBufferRef.current = [];
+
             const sdp = await pc.createAnswer();
             await pc.setLocalDescription(sdp);
 
@@ -236,17 +255,40 @@ const Room = () => {
         socket.on("answer", ({remoteSdp} : {remoteSdp: RTCSessionDescriptionInit}) => {
             setLobby(false);
             senderPcRef.current?.setRemoteDescription(remoteSdp);
+            senderIceCandidatesBufferRef.current.forEach(candidate => {
+                    console.log("Applying buffered ICE candidate for sender");
+                    senderPcRef.current?.addIceCandidate(candidate);
+            });
+            senderIceCandidatesBufferRef.current = [];
         })
 
         socket.on("lobby", () => {
             setLobby(true);
         })
 
-        socket.on("add-ice-candidate", ({ candidate, type}) => {
-            if(type === "sender"){
-                receiverPcRef?.current?.addIceCandidate(candidate);
-            }else{
-                senderPcRef?.current?.addIceCandidate(candidate);
+        // socket.on("add-ice-candidate", ({ candidate, type}) => {
+        //     if(type === "sender"){
+        //         receiverPcRef?.current?.addIceCandidate(candidate);
+        //     }else{
+        //         senderPcRef?.current?.addIceCandidate(candidate);
+        //     }
+        // });
+
+        socket.on("add-ice-candidate", ({ candidate, type }: { candidate: RTCIceCandidateInit, type: string }) => {
+            if (type === "sender") {
+                if (receiverPcRef.current?.remoteDescription) {
+                    receiverPcRef.current.addIceCandidate(candidate);
+                } else {
+                    console.log("Buffering ICE candidate for receiver");
+                    receiverIceCandidatesBufferRef.current.push(candidate);
+                }
+            } else {
+                if (senderPcRef.current?.remoteDescription) {
+                    senderPcRef.current.addIceCandidate(candidate);
+                } else {
+                    console.log("Buffering ICE candidate for sender");
+                    senderIceCandidatesBufferRef.current.push(candidate);
+                }
             }
         });
 
