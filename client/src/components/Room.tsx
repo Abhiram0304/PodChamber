@@ -153,6 +153,13 @@ const Room = () => {
             localMediaStream.getTracks().forEach((track) => {
                 console.log("sender track", track);
                 pc.addTrack(track, localMediaStream);
+                track.onunmute = () => {
+                    console.log(`${track.kind} track is now unmuted (media flowing) sender`);
+                };
+
+                track.onmute = () => {
+                    console.log(`${track.kind} track is muted (no media flowing) sender`);
+                };
             });
 
             pc.onicecandidate = (event) => {
@@ -184,6 +191,13 @@ const Room = () => {
             localMediaStream.getTracks().forEach((track) => {
                 console.log("Other track", track);
                 pc.addTrack(track, localMediaStream);
+                track.onunmute = () => {
+                    console.log(`${track.kind} track is now unmuted (media flowing) reveiver`);
+                };
+
+                track.onmute = () => {
+                    console.log(`${track.kind} track is muted (no media flowing) receiver`);
+                };
             });
 
             await pc.setRemoteDescription(new RTCSessionDescription(remoteSdp));
