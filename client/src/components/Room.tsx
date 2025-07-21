@@ -11,6 +11,13 @@ import toast from "react-hot-toast";
 import { FiCopy } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
+const rtcConfig = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" }
+  ]
+};
+
+
 const Room = () => {
 
     const userName = useSelector((state: RootState) => state.app.userName)
@@ -157,7 +164,7 @@ const Room = () => {
         
         socket.on("send-offer", async({roomId} : {roomId : string}) => {
             setLobby(false);
-            const pc = new RTCPeerConnection();
+            const pc = new RTCPeerConnection(rtcConfig);
             pc.ontrack = handleRemoteTrack;
 
             if(!localMediaStream) return;
@@ -187,7 +194,7 @@ const Room = () => {
 
         socket.on("offer", async({remoteSdp, roomId} : {remoteSdp: RTCSessionDescriptionInit, roomId: string}) => {
             setLobby(false);
-            const pc = new RTCPeerConnection();
+            const pc = new RTCPeerConnection(rtcConfig);
 
             pc.ontrack = handleRemoteTrack;
 
