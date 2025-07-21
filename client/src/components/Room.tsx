@@ -424,6 +424,7 @@ const Room = () => {
                     <div className="aspect-video w-full max-h-[300px] sm:max-h-[400px] flex items-center justify-center bg-black border-1 border-gray-400 rounded-[1rem] overflow-hidden">
                         <video
                             autoPlay
+                            muted = {false}
                             playsInline
                             className="w-full h-full object-contain"
                             ref={remoteVideoRef}
