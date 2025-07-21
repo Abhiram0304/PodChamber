@@ -88,8 +88,7 @@ const Room = () => {
 
         console.log("HJERE");
 
-        // remoteVideoRef.current
-        //     .play()
+        remoteVideoRef.current.play()
         //     .then(() => {
         //         console.log("Remote video started playing");
         //     })
