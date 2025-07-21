@@ -403,14 +403,14 @@ const Room = () => {
             <div className="flex gap-4 sm:w-[60%] w-[90%] sm:flex-row flex-col items-center justify-center">
                 <div className="w-full flex flex-col items-center">
                     <p>{userName} (You)</p>
-                    <div className="aspect-video w-full max-h-[300px] sm:max-h-[400px] flex items-center justify-center bg-black rounded-[1rem] overflow-hidden">
-                    <video
-                        autoPlay
-                        playsInline
-                        muted
-                        className="w-full h-full object-contain"
-                        ref={localVideoRef}
-                    />
+                    <div className="aspect-video w-full max-h-[300px] sm:max-h-[400px] flex items-center justify-center bg-black rounded-[1rem] border-1 border-gray-400 overflow-hidden">
+                        <video
+                            autoPlay
+                            playsInline
+                            muted
+                            className="w-full h-full object-contain"
+                            ref={localVideoRef}
+                        />
                     </div>
                 </div>
 
@@ -421,12 +421,12 @@ const Room = () => {
                         <p>Waiting to connect you to someone</p>
                     </div>
                     ) : (
-                    <div className="aspect-video w-full max-h-[300px] sm:max-h-[400px] flex items-center justify-center bg-black rounded-[1rem] overflow-hidden">
+                    <div className="aspect-video w-full max-h-[300px] sm:max-h-[400px] flex items-center justify-center bg-black border-1 border-gray-400 rounded-[1rem] overflow-hidden">
                         <video
-                        autoPlay
-                        playsInline
-                        className="w-full h-full object-contain"
-                        ref={remoteVideoRef}
+                            autoPlay
+                            playsInline
+                            className="w-full h-full object-contain"
+                            ref={remoteVideoRef}
                         />
                     </div>
                     )}
