@@ -154,6 +154,8 @@ const Room = () => {
                 stream.addTrack(localAudioTrackRef.current);
             }
 
+            console.log("Sender PC Tracks", stream.getTracks());
+
             stream.getTracks().forEach((track) => {
                 pc.addTrack(track, stream);
             });
@@ -191,9 +193,11 @@ const Room = () => {
                 stream.addTrack(localAudioTrackRef.current);
             }
 
+            console.log("Other side tracks : ", stream.getTracks());
             stream.getTracks().forEach((track) => {
                 pc.addTrack(track, stream);
             });
+
 
             await pc.setRemoteDescription(new RTCSessionDescription(remoteSdp));
             const sdp = await pc.createAnswer();
