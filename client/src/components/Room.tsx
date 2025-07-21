@@ -252,9 +252,9 @@ const Room = () => {
             })
         })
 
-        socket.on("answer", ({remoteSdp} : {remoteSdp: RTCSessionDescriptionInit}) => {
+        socket.on("answer", async ({remoteSdp} : {remoteSdp: RTCSessionDescriptionInit}) => {
             setLobby(false);
-            senderPcRef.current?.setRemoteDescription(remoteSdp);
+            await senderPcRef.current?.setRemoteDescription(remoteSdp);
             senderIceCandidatesBufferRef.current.forEach(candidate => {
                     console.log("Applying buffered ICE candidate for sender");
                     senderPcRef.current?.addIceCandidate(candidate);
