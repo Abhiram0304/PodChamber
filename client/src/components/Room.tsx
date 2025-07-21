@@ -403,20 +403,36 @@ const Room = () => {
             <div className="flex gap-4 sm:w-[60%] w-[90%] sm:flex-row flex-col items-center justify-center">
                 <div className="w-full flex flex-col items-center">
                     <p>{userName} (You)</p>
-                    <video autoPlay playsInline muted className="border-amber-50 w-full border-2 rounded-[1rem]" ref={localVideoRef} />
+                    <div className="aspect-video w-full max-h-[300px] sm:max-h-[400px] flex items-center justify-center bg-black rounded-[1rem] overflow-hidden">
+                    <video
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-full object-contain"
+                        ref={localVideoRef}
+                    />
+                    </div>
                 </div>
-                
+
                 <div className="w-full flex flex-col items-center">
-                    <p>{remoteUserName!==null ? remoteUserName : "No User Joined Yet"}</p>
+                    <p>{remoteUserName !== null ? remoteUserName : "No User Joined Yet"}</p>
                     {lobby ? (
-                        <div className="w-full min-h-[200px] sm:h-full h-[300px] border-amber-50 border-2 flex rounded-[1rem] items-center justify-center">
-                            <p>Waiting to connect you to someone</p>
-                        </div>
+                    <div className="w-full aspect-video max-h-[300px] sm:max-h-[400px] border-amber-50 border-2 flex rounded-[1rem] items-center justify-center bg-black">
+                        <p>Waiting to connect you to someone</p>
+                    </div>
                     ) : (
-                        <video autoPlay playsInline className="border-amber-50 w-full border-2 rounded-[1rem]" ref={remoteVideoRef} />
+                    <div className="aspect-video w-full max-h-[300px] sm:max-h-[400px] flex items-center justify-center bg-black rounded-[1rem] overflow-hidden">
+                        <video
+                        autoPlay
+                        playsInline
+                        className="w-full h-full object-contain"
+                        ref={remoteVideoRef}
+                        />
+                    </div>
                     )}
                 </div>
             </div>
+
 
             <div className="flex items-center justify-center gap-4 py-[0.5rem] px-[1rem] rounded-[2rem] bg-gray-900">
                 <button
