@@ -89,7 +89,7 @@ const Room = () => {
             videoTrack.onmute = () => {
                 console.log("Local video track is muted");
             }
-            videoTrack.onmute = () => {
+            videoTrack.onunmute = () => {
                 console.log("Local video track is muted");
             }
 
