@@ -49,7 +49,13 @@ const Room = () => {
     }, [audioMuted, videoMuted]);
 
     const handleRemoteTrack = (event: RTCTrackEvent) => {
-        console.log("TRACK", event.track);
+        event.track.onunmute = () => {
+            console.log(`${event.track.kind} track is now unmuted (media flowing)`);
+        };
+
+        event.track.onmute = () => {
+            console.log(`${event.track.kind} track is muted (no media flowing)`);
+        };
         if(!remoteVideoRef.current) return;
 
         if(!remoteMediaStreamRef.current) {
@@ -143,18 +149,7 @@ const Room = () => {
             const pc = new RTCPeerConnection();
             pc.ontrack = handleRemoteTrack;
 
-            // const stream = new MediaStream();
-            // if(localVideoTrackRef.current){
-            //     stream.addTrack(localVideoTrackRef.current);
-            // }
-            // if(localAudioTrackRef.current){
-            //     stream.addTrack(localAudioTrackRef.current);
-            // }
-            // stream.getTracks().forEach((track) => {
-            //     pc.addTrack(track, stream);
-            // });
-
-            if (!localMediaStream) return;
+            if(!localMediaStream) return;
             localMediaStream.getTracks().forEach((track) => {
                 console.log("sender track", track);
                 pc.addTrack(track, localMediaStream);
@@ -184,17 +179,6 @@ const Room = () => {
             const pc = new RTCPeerConnection();
 
             pc.ontrack = handleRemoteTrack;
-
-            // const stream = new MediaStream();
-            // if(localVideoTrackRef.current){
-            //     stream.addTrack(localVideoTrackRef.current);
-            // }
-            // if(localAudioTrackRef.current){
-            //     stream.addTrack(localAudioTrackRef.current);
-            // }
-            // stream.getTracks().forEach((track) => {
-            //     pc.addTrack(track, stream);
-            // });
 
             if (!localMediaStream) return;
             localMediaStream.getTracks().forEach((track) => {
@@ -301,6 +285,7 @@ const Room = () => {
         })
 
         socket.on("set-remote-user-name", ({userName} : {userName: string}) => {
+            toast(userName + " joining !");
             setRemoteUserName(userName);
         })
 
