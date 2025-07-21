@@ -64,19 +64,23 @@ const Room = () => {
 
         const stream = remoteMediaStreamRef.current;
         stream.addTrack(event.track);
+        console.log("STREAM TRACKS", stream.getTracks());
 
         if(!remoteVideoRef.current.srcObject){
+            console.log("HERE");
             remoteVideoRef.current.srcObject = stream;
         }
 
-        remoteVideoRef.current
-            .play()
-            .then(() => {
-                console.log("Remote video started playing");
-            })
-            .catch((err) => {
-                console.error("Remote video play error:", err);
-            });
+        console.log("HJERE");
+
+        // remoteVideoRef.current
+        //     .play()
+        //     .then(() => {
+        //         console.log("Remote video started playing");
+        //     })
+        //     .catch((err) => {
+        //         console.error("Remote video play error:", err);
+        //     });
     };
 
     const getMedia = async () => {
