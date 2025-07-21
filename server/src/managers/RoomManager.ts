@@ -22,10 +22,11 @@ export class RoomManager {
             const secondUser = room.users[1];
             const firstUserName = firstUser?.userName;
             const secondUserName = secondUser?.userName;
+            firstUser.socket.emit("set-remote-user-name", {userName: secondUserName});
+            secondUser.socket.emit("set-remote-user-name", {userName: firstUserName});
             
             setTimeout(() => {
-                firstUser.socket.emit("send-offer", { roomId, remoteUserName: secondUserName });
-                // secondUser.socket.emit("send-offer", { roomId, remoteUserName: firstUserName });
+                firstUser.socket.emit("send-offer", { roomId });
             }, 10000);
         }
     }

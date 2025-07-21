@@ -141,8 +141,7 @@ const Room = () => {
 
         socket.emit("join-room", {roomId, userName});
         
-        socket.on("send-offer", async({roomId, remoteUserName} : {roomId : string, remoteUserName: string}) => {
-            setRemoteUserName(remoteUserName)
+        socket.on("send-offer", async({roomId} : {roomId : string}) => {
             setLobby(false);
             const pc = new RTCPeerConnection();
             pc.ontrack = handleRemoteTrack;
@@ -292,6 +291,10 @@ const Room = () => {
             socket.disconnect();
             navigate("/");
             toast.success("Call ended successfully");
+        })
+
+        socket.on("set-remote-user-name", ({userName} : {userName: string}) => {
+            setRemoteUserName(userName);
         })
 
         return () => {
