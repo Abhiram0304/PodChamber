@@ -73,9 +73,6 @@ const Room = () => {
             });
     };
 
-
-
-
     const getMedia = async () => {
             const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
             const videoTrack = stream.getVideoTracks()[0];
@@ -146,18 +143,21 @@ const Room = () => {
             const pc = new RTCPeerConnection();
             pc.ontrack = handleRemoteTrack;
 
-            const stream = new MediaStream();
-            if(localVideoTrackRef.current){
-                stream.addTrack(localVideoTrackRef.current);
-            }
-            if(localAudioTrackRef.current){
-                stream.addTrack(localAudioTrackRef.current);
-            }
+            // const stream = new MediaStream();
+            // if(localVideoTrackRef.current){
+            //     stream.addTrack(localVideoTrackRef.current);
+            // }
+            // if(localAudioTrackRef.current){
+            //     stream.addTrack(localAudioTrackRef.current);
+            // }
+            // stream.getTracks().forEach((track) => {
+            //     pc.addTrack(track, stream);
+            // });
 
-            console.log("Sender PC Tracks", stream.getTracks());
-
-            stream.getTracks().forEach((track) => {
-                pc.addTrack(track, stream);
+            if (!localMediaStream) return;
+            localMediaStream.getTracks().forEach((track) => {
+                console.log("sender track", track);
+                pc.addTrack(track, localMediaStream);
             });
 
             pc.onicecandidate = (event) => {
@@ -185,19 +185,22 @@ const Room = () => {
 
             pc.ontrack = handleRemoteTrack;
 
-            const stream = new MediaStream();
-            if(localVideoTrackRef.current){
-                stream.addTrack(localVideoTrackRef.current);
-            }
-            if(localAudioTrackRef.current){
-                stream.addTrack(localAudioTrackRef.current);
-            }
+            // const stream = new MediaStream();
+            // if(localVideoTrackRef.current){
+            //     stream.addTrack(localVideoTrackRef.current);
+            // }
+            // if(localAudioTrackRef.current){
+            //     stream.addTrack(localAudioTrackRef.current);
+            // }
+            // stream.getTracks().forEach((track) => {
+            //     pc.addTrack(track, stream);
+            // });
 
-            console.log("Other side tracks : ", stream.getTracks());
-            stream.getTracks().forEach((track) => {
-                pc.addTrack(track, stream);
+            if (!localMediaStream) return;
+            localMediaStream.getTracks().forEach((track) => {
+                console.log("Other track", track);
+                pc.addTrack(track, localMediaStream);
             });
-
 
             await pc.setRemoteDescription(new RTCSessionDescription(remoteSdp));
             const sdp = await pc.createAnswer();
