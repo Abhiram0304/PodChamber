@@ -15,6 +15,10 @@ app.use(
     })
 )
 
+app.get("/", (_, res) => {
+    res.send("Server is running");
+});
+
 app.use("/api", videoRoutes);
 
 const server = http.createServer(app);
