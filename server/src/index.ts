@@ -16,7 +16,7 @@ app.use(
 )
 
 app.get("/", (_, res) => {
-    res.send("Server is running");
+    res.json({ message: "Server is running" });
 });
 
 app.use("/api", videoRoutes);
