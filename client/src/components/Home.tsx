@@ -13,25 +13,6 @@ const Home = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // const getMedia = async () => {
-    //     const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
-    //     const videoTrack = stream.getVideoTracks()[0];
-    //     // const audioTrack = stream.getAudioTracks()[0];
-    //     // dispatch(setLocalAudioTrack(audioTrack));
-    //     // dispatch(setLocalVideoTrack(videoTrack));
-
-    //     if(!videoRef.current) return;
-
-    //     videoRef.current.srcObject = new MediaStream([videoTrack]);
-    //     videoRef.current.play();
-    // }
-
-    // useEffect(() => {
-    //     if(videoRef && videoRef.current){
-    //         getMedia();
-    //     }
-    // }, [videoRef]);
-
     useEffect(() => {
         let stream: MediaStream;
 
@@ -67,15 +48,19 @@ const Home = () => {
     }
 
   return (
-    <div className="relative pb-[2rem] w-[100vw] min-h-[calc(100vh-4rem)] bg-[#000000] flex flex-col justify-center items-center gap-[4rem]">
-        <div className="w-[100%] flex flex-col justify-center items-center gap-[1rem]">
+    <div className="pb-[2rem] w-[100vw] min-h-[calc(100vh-4rem)] bg-[#000000] flex flex-col justify-center items-center gap-[4rem]">
+        <div className="w-[100%] flex flex-col justify-center items-center gap-[1rem] z-[10]">
             <p className="md:max-w-[50%] max-w-[95%] text-[#adb5bd] font-semibold text-[20px] text-center">Record high quality podcasts without worrying about internet issues, with our unique local video recording architecture.</p>
             <button className="px-[1rem] py-[0.5rem] bg-[#fca311] rounded-2xl hover:scale-105 transition-all duration-200 cursor-pointer font-semibold text-black" onClick={() => navigate('/about')}>Know More</button>       
         </div>
-        <div className="flex md:flex-row flex-col mx-auto justify-center items-center md:gap-[6rem] gap-[3rem]">
-            <video className="sm:w-[30%] w-[70%] rounded-[1rem]" autoPlay ref={videoRef} muted />
 
-            <div className="flex flex-col justify-center items-center gap-[1rem]">
+        <div className="relative flex md:flex-row flex-col mx-auto justify-center items-center md:gap-[6rem] gap-[3rem]">
+            <video className="sm:w-[30%] w-[70%] rounded-[1rem] z-[10]" autoPlay ref={videoRef} muted />
+            <div className="absolute inset-0 z-0">
+                <div className="w-[400px] h-[500px] bg-blue-500/40 absolute top-[-200px] left-[-50px] rounded-full blur-[100px] opacity-60 animate-pulse transition duration-10000 ease-in-out"></div>
+                <div className="w-[700px] h-[500px] bg-pink-500/35 absolute top-[50px] left-[200px] rounded-full blur-[100px] opacity-60 animate-pulse transition duration-10000 ease-in-out"></div>
+            </div>
+            <div className="flex flex-col justify-center items-center gap-[1rem] z-[10]">
                 <p className="text-[#adb5bd] max-w-[95%] font-semibold text-[16px] md:text-[18px] text-center">Join a pod cell and start your podcast now !</p>
                 <input 
                     type="text" 

@@ -33,7 +33,6 @@ const Room = () => {
 
     const [remoteUserName, setRemoteUserName] = useState<string | null>(null);
     const [sessionId, setSessionId] = useState<string | null>(null);
-    const [lobby, setLobby] = useState<boolean>(true)
     const [socket, setSocket] = useState<Socket | null>(null)
     const senderPcRef = useRef<RTCPeerConnection | null>(null);
     const receiverPcRef = useRef<RTCPeerConnection | null>(null);
@@ -173,7 +172,6 @@ const Room = () => {
         socket.emit("join-room", {roomId, userName});
         
         socket.on("send-offer", async({roomId} : {roomId : string}) => {
-            setLobby(false);
             const pc = new RTCPeerConnection(rtcConfig);
 
             pc.onconnectionstatechange = () => {
@@ -208,7 +206,6 @@ const Room = () => {
         })
 
         socket.on("offer", async({remoteSdp, roomId} : {remoteSdp: RTCSessionDescriptionInit, roomId: string}) => {
-            setLobby(false);
             const pc = new RTCPeerConnection(rtcConfig);
 
             pc.onconnectionstatechange = () => {
@@ -253,17 +250,12 @@ const Room = () => {
         })
 
         socket.on("answer", async ({remoteSdp} : {remoteSdp: RTCSessionDescriptionInit}) => {
-            setLobby(false);
             await senderPcRef.current?.setRemoteDescription(remoteSdp);
             senderIceCandidatesBufferRef.current.forEach(candidate => {
                     console.log("Applying buffered ICE candidate for sender");
                     senderPcRef.current?.addIceCandidate(candidate);
             });
             senderIceCandidatesBufferRef.current = [];
-        })
-
-        socket.on("lobby", () => {
-            setLobby(true);
         })
 
         // socket.on("add-ice-candidate", ({ candidate, type}) => {
@@ -331,7 +323,6 @@ const Room = () => {
         socket.on("confirm-end-call", () => {
             setRemoteUserName(null);
             setSessionId(null);
-            setLobby(true);
             setMediaReady(false);
             localVideoTrackRef.current = null;
             localAudioTrackRef.current = null;
@@ -472,20 +463,20 @@ const Room = () => {
 
                 <div className="w-full flex flex-col items-center">
                     <p>{remoteUserName !== null ? remoteUserName : "No User Joined Yet"}</p>
-                    {lobby ? (
-                    <div className="w-full aspect-video max-h-[300px] sm:max-h-[400px] border-amber-50 border-2 flex rounded-[1rem] items-center justify-center bg-black">
-                        <p>Waiting to connect you to someone</p>
-                    </div>
+                    {!remoteUserName ? (
+                        <div className="w-full aspect-video max-h-[300px] sm:max-h-[400px] border-amber-50 border-2 flex rounded-[1rem] items-center justify-center bg-black">
+                            <p>Waiting to connect you to someone</p>
+                        </div>
                     ) : (
-                    <div className="aspect-video w-full max-h-[300px] sm:max-h-[400px] flex items-center justify-center bg-black border-1 border-gray-400 rounded-[1rem] overflow-hidden">
-                        <video
-                            autoPlay
-                            muted = {false}
-                            playsInline
-                            className="w-full h-full object-contain"
-                            ref={remoteVideoRef}
-                        />
-                    </div>
+                        <div className="aspect-video w-full max-h-[300px] sm:max-h-[400px] flex items-center justify-center bg-black border-1 border-gray-400 rounded-[1rem] overflow-hidden">
+                            <video
+                                autoPlay
+                                muted = {false}
+                                playsInline
+                                className="w-full h-full object-contain"
+                                ref={remoteVideoRef}
+                            />
+                        </div>
                     )}
                 </div>
             </div>
