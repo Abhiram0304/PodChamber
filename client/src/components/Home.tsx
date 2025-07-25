@@ -57,8 +57,8 @@ const Home = () => {
         <div className="relative flex md:flex-row flex-col mx-auto justify-center items-center md:gap-[6rem] gap-[3rem]">
             <video className="sm:w-[30%] w-[70%] rounded-[1rem] z-[10]" autoPlay ref={videoRef} muted />
             <div className="absolute inset-0 z-0">
-                <div className="w-[400px] h-[500px] bg-blue-500/40 absolute top-[-200px] left-[-50px] rounded-full blur-[100px] opacity-60 animate-pulse transition duration-10000 ease-in-out"></div>
-                <div className="w-[700px] h-[500px] bg-pink-500/35 absolute top-[50px] left-[200px] rounded-full blur-[100px] opacity-60 animate-pulse transition duration-10000 ease-in-out"></div>
+                <div className="w-[400px] h-[500px] bg-blue-500/45 absolute top-[-200px] left-[-50px] rounded-full blur-[100px] opacity-60 animate-pulse transition duration-10000 ease-in-out"></div>
+                <div className="w-[700px] h-[500px] bg-pink-500/40 absolute top-[50px] left-[200px] rounded-full blur-[100px] opacity-60 animate-pulse transition duration-10000 ease-in-out"></div>
             </div>
             <div className="flex flex-col justify-center items-center gap-[1rem] z-[10]">
                 <p className="text-[#adb5bd] max-w-[95%] font-semibold text-[16px] md:text-[18px] text-center">Join a pod cell and start your podcast now !</p>
