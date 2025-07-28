@@ -4,6 +4,15 @@ import http from "http";
 import express from "express";
 import videoRoutes from './routes/videoRoutes'
 import cors from 'cors';
+import cron from "node-cron";
+import axios from "axios";
+import type { AxiosResponse } from "axios/index";
+
+interface CleanupResponse {
+  success: boolean;
+  deletedCount?: number;
+  message: string;
+}
 
 const app = express();
 app.use(express.json());
@@ -46,4 +55,19 @@ io.on("connection", (socket: Socket) => {
 
 server.listen(3000, () => {
   console.log("Server listening on http://localhost:3000");
+});
+
+cron.schedule("*/1 * * * *", async (): Promise<void> => {
+  try{
+    console.log("Running internal cron job: pinging POST /deleteOldVideoCronJob");
+
+    const response = await axios.post<CleanupResponse>(
+      `${process.env.SERVER_BASE_URL}/api/deleteOldVideoCronJob`,
+      { secretKey: process.env.SECRET_KEY }
+    );
+
+    console.log("Cleanup response:", response.data);
+  }catch(err: any){
+    console.log("CRON Job failed: ", err.message || err);
+  }
 });

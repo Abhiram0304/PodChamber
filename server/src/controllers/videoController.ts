@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectsCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
 import fs from "fs/promises";
 import path from "path";
 import { tmpdir } from "os";
@@ -179,5 +179,93 @@ export const getCompleteLayoutVideo = async (req: Request, res: Response) => {
       success: false,
       message: "Something went wrong",
     });
+  }
+};
+
+export const deleteOldVideoCronJob = async (req: Request, res: Response) => {
+  try{
+    const {secretKey} = req.body;
+    if(secretKey !== process.env.SECRET_KEY){
+      res.status(403).json({
+        success: false,
+        message: "Forbidden - Invalid secret key",
+      });
+      return;
+    }
+
+    const now = Date.now();
+    const bucket = process.env.S3_BUCKET_NAME!;
+    const THRESHOLD_MS = 24 * 60 * 60 * 1000;
+    const cutoffTime = now - THRESHOLD_MS;
+
+    const objectsToDelete: { Key: string }[] = [];
+
+    const videoChunksResult = await s3.send(new ListObjectsV2Command({
+      Bucket: bucket,
+      Prefix: "video-recordings/",
+    }));
+
+    if(videoChunksResult.Contents){
+      for(const obj of videoChunksResult.Contents){
+        const key = obj.Key!;
+        const match = key.match(/^video-recordings\/(.+?)\/.+/);
+        if(!match) continue;
+
+        const sessionId = match[1]; 
+        const parts = sessionId.split("-");
+        if(parts.length < 3) continue;
+
+        const timestamp = parseInt(parts[1]);
+        if(isNaN(timestamp)) continue;
+
+        if(timestamp < cutoffTime){
+          objectsToDelete.push({ Key: key });
+        }
+      }
+    }
+
+    const mergedVideosResult = await s3.send(new ListObjectsV2Command({
+      Bucket: bucket,
+      Prefix: "merged-videos/",
+    }));
+
+    if(mergedVideosResult.Contents){
+      for(const obj of mergedVideosResult.Contents){
+        const key = obj.Key!;
+        const match = key.match(/^merged-videos\/session-(\d+)\.mp4$/);
+        if(!match) continue;
+
+        const timestamp = parseInt(match[1]);
+        if(isNaN(timestamp)) continue;
+
+        if(timestamp < cutoffTime) {
+          objectsToDelete.push({ Key: key });
+        }
+      }
+    }
+
+    if(objectsToDelete.length > 0){
+      await s3.send(new DeleteObjectsCommand({
+        Bucket: bucket,
+        Delete: {
+          Objects: objectsToDelete,
+          Quiet: true,
+        },
+      }));
+    }
+
+    res.status(200).json({
+      success: true,
+      deletedCount: objectsToDelete.length,
+      message: "Old session videos cleaned up.",
+    });
+    return;
+  }catch(err){
+    console.error("Error cleaning up old sessions:", err);
+    res.status(500).json({
+      success: false,
+      message: "Cleanup failed",
+    });
+    return;
   }
 };

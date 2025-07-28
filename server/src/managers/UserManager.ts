@@ -26,10 +26,6 @@ export class UserManager {
             this.roomManager.onAnswer(roomId, sdp, socket.id);
         });
 
-        // socket.on("add-ice-candidate", ({candidate, type, roomId} : {candidate: any, type: "sender" | "receiver", roomId: string}) => {
-        //     this.roomManager.onIceCandidate(roomId, socket.id, candidate, type);
-        // });
-
         socket.on("add-ice-candidate", ({ candidate, roomId }: { candidate: any, roomId: string }) => {
             this.roomManager.onIceCandidate(roomId, socket.id, candidate);
         });

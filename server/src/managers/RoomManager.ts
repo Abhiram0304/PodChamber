@@ -63,14 +63,6 @@ export class RoomManager {
         receiverUser?.socket.emit("answer", {remoteSdp: sdp, roomId});
     }
 
-    // public onIceCandidate(roomId: string, senderSocketId: string, candidate: any, type: "sender" | "receiver"): void {
-    //     const room = this.rooms.get(roomId);
-    //     if(!room) return;
-        
-    //     const receiverUser = this.getOtherUser(roomId, senderSocketId);
-    //     receiverUser?.socket.emit("add-ice-candidate", {candidate, type, roomId});
-    // }
-
     public onIceCandidate(roomId: string, senderSocketId: string, candidate: any): void {
         const receiverUser = this.getOtherUser(roomId, senderSocketId);
         receiverUser?.socket.emit("add-ice-candidate", { candidate, roomId });
@@ -84,5 +76,4 @@ export class RoomManager {
     public getUserCountInRoom(roomId: string): number {
         return this.rooms.get(roomId)?.users.length || 0;
     }
-
 }

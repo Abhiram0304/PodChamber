@@ -48,7 +48,7 @@ const Home = () => {
     }
 
   return (
-    <div className="pb-[2rem] w-[100vw] min-h-[calc(100vh-4rem)] bg-[#000000] flex flex-col justify-center items-center gap-[4rem]">
+    <div className="w-[100vw] min-h-[calc(100vh-4rem)] bg-[#000000] flex flex-col justify-center items-center gap-[2rem]">
         <div className="w-[100%] flex flex-col justify-center items-center gap-[1rem] z-[10]">
             <p className="md:max-w-[50%] max-w-[95%] text-[#adb5bd] font-semibold text-[20px] text-center">Record high quality podcasts without worrying about internet issues, with our unique local video recording architecture.</p>
             <button className="px-[1rem] py-[0.5rem] bg-[#fca311] rounded-2xl hover:scale-105 transition-all duration-200 cursor-pointer font-semibold text-black" onClick={() => navigate('/about')}>Know More</button>       
@@ -79,7 +79,7 @@ const Home = () => {
                 </button>
             </div>
         </div>
-        <div className="absolute bottom-[1rem] w-full text-center text-white font-semibold">Made by Abhiram T</div>
+        <div className="relative w-full py-[0rem] text-center text-white font-semibold">Made by Abhiram T</div>
     </div>
   )
 }

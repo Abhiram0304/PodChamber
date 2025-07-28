@@ -26,7 +26,7 @@ const About = () => {
                         <strong className="text-[1.2rem]">Built for creators, not just conversations</strong> – Designed specifically for podcasters and storytellers who need reliable, studio-quality content.
                     </li>
                 </ul>
-            <div className="absolute bottom-[1rem] w-full text-center text-white font-semibold">Made by Abhiram T</div>
+            <div className="relative bottom-[1rem] w-full text-center text-white font-semibold">Made by Abhiram T</div>
         </div>
     )
 }

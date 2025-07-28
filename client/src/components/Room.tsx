@@ -34,10 +34,6 @@ const Room = () => {
     const [remoteUserName, setRemoteUserName] = useState<string | null>(null);
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [socket, setSocket] = useState<Socket | null>(null)
-    // const senderPcRef = useRef<RTCPeerConnection | null>(null);
-    // const receiverPcRef = useRef<RTCPeerConnection | null>(null);
-    // const senderIceCandidatesBufferRef = useRef<RTCIceCandidateInit[]>([]);
-    // const receiverIceCandidatesBufferRef = useRef<RTCIceCandidateInit[]>([]);
     const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
     const iceCandidatesBufferRef = useRef<RTCIceCandidateInit[]>([]);
     const [recordingOn, setRecordingOn] = useState<boolean>(false);
@@ -166,111 +162,6 @@ const Room = () => {
         setSocket(socket);
 
         socket.emit("join-room", {roomId, userName});
-        
-        // socket.on("send-offer", async({roomId} : {roomId : string}) => {
-        //     const pc = new RTCPeerConnection(rtcConfig);
-
-        //     pc.onconnectionstatechange = () => {
-        //         console.log(`SENDER PC Connection State: ${pc.connectionState}`);
-        //     };
-
-        //     pc.ontrack = handleRemoteTrack;
-
-        //     if(!localMediaStream) return;
-        //     localMediaStream.getTracks().forEach((track) => {
-        //         console.log("sender track", track);
-        //         pc.addTrack(track, localMediaStream);
-        //     });
-
-        //     pc.onicecandidate = (event) => {
-        //         if(event.candidate){
-        //             socket.emit("add-ice-candidate", {
-        //                 candidate: event.candidate,
-        //                 roomId: roomId,
-        //                 type: "sender",
-        //             })
-        //         }
-        //     }
-
-        //     pc.onnegotiationneeded = async() => {
-        //         const sdp = await pc.createOffer();
-        //         await pc.setLocalDescription(sdp);
-        //         socket.emit("offer", {sdp, roomId});
-        //     }
-
-        //     senderPcRef.current = pc;
-        // })
-
-        // socket.on("offer", async({remoteSdp, roomId} : {remoteSdp: RTCSessionDescriptionInit, roomId: string}) => {
-        //     const pc = new RTCPeerConnection(rtcConfig);
-
-        //     pc.onconnectionstatechange = () => {
-        //         console.log(`RECEIVER PC Connection State: ${pc.connectionState}`);
-        //     };
-
-        //     pc.ontrack = handleRemoteTrack;
-
-        //     if (!localMediaStream) return;
-        //     localMediaStream.getTracks().forEach((track) => {
-        //         console.log("Other track", track);
-        //         pc.addTrack(track, localMediaStream);
-        //     });
-
-        //     await pc.setRemoteDescription(new RTCSessionDescription(remoteSdp));
-
-        //     receiverIceCandidatesBufferRef.current.forEach(candidate => {
-        //         console.log("Applying buffered ICE candidate for receiver");
-        //         pc.addIceCandidate(candidate);
-        //     });
-        //     receiverIceCandidatesBufferRef.current = [];
-
-        //     const sdp = await pc.createAnswer();
-        //     await pc.setLocalDescription(sdp);
-
-        //     pc.onicecandidate = (event) => {
-        //         if(!event.candidate) return;
-
-        //         socket.emit("add-ice-candidate", {
-        //             candidate: event.candidate,
-        //             roomId: roomId,
-        //             type: "receiver",
-        //         })
-        //     }
-
-        //     receiverPcRef.current = pc;
-
-        //     socket.emit("answer", {
-        //         sdp,
-        //         roomId,
-        //     })
-        // })
-
-        // socket.on("answer", async ({remoteSdp} : {remoteSdp: RTCSessionDescriptionInit}) => {
-        //     await senderPcRef.current?.setRemoteDescription(remoteSdp);
-        //     senderIceCandidatesBufferRef.current.forEach(candidate => {
-        //             console.log("Applying buffered ICE candidate for sender");
-        //             senderPcRef.current?.addIceCandidate(candidate);
-        //     });
-        //     senderIceCandidatesBufferRef.current = [];
-        // })
-
-        // socket.on("add-ice-candidate", ({ candidate, type }: { candidate: RTCIceCandidateInit, type: string }) => {
-        //     if (type === "sender") {
-        //         if (receiverPcRef.current?.remoteDescription) {
-        //             receiverPcRef.current.addIceCandidate(candidate);
-        //         } else {
-        //             console.log("Buffering ICE candidate for receiver");
-        //             receiverIceCandidatesBufferRef.current.push(candidate);
-        //         }
-        //     } else {
-        //         if (senderPcRef.current?.remoteDescription) {
-        //             senderPcRef.current.addIceCandidate(candidate);
-        //         } else {
-        //             console.log("Buffering ICE candidate for sender");
-        //             senderIceCandidatesBufferRef.current.push(candidate);
-        //         }
-        //     }
-        // });
 
         socket.on("send-offer", async ({ roomId }: { roomId: string }) => {
             console.log("I am the offerer. Creating peer connection...");
@@ -385,28 +276,6 @@ const Room = () => {
             alert(message);
         });
 
-        // socket.on("confirm-end-call", () => {
-        //     setRemoteUserName(null);
-        //     setSessionId(null);
-        //     setMediaReady(false);
-        //     localVideoTrackRef.current = null;
-        //     localAudioTrackRef.current = null;
-        //     remoteMediaStreamRef.current = new MediaStream();
-        //     if(remoteVideoRef.current) {
-        //         remoteVideoRef.current.srcObject = null;
-        //     }
-        //     if(localVideoRef.current) {
-        //         localVideoRef.current.srcObject = null;
-        //     }
-        //     senderPcRef.current?.close();
-        //     receiverPcRef.current?.close();
-        //     senderPcRef.current = null;
-        //     receiverPcRef.current = null;
-        //     socket.disconnect();
-        //     navigate("/");
-        //     toast.success("Call ended successfully");
-        // })
-
         socket.on("set-remote-user-name", ({userName} : {userName: string}) => {
             toast(userName + " joining !");
             setRemoteUserName(userName);
@@ -453,7 +322,7 @@ const Room = () => {
     }
 
     return (
-        <div className="relative pb-[3rem] w-[100vw] min-h-[calc(100vh-4rem)] bg-black text-white flex flex-col items-center gap-[2rem]">
+        <div className="w-[100vw] overflow-y-auto min-h-[calc(100vh-4rem)] bg-black text-white flex flex-col items-center gap-[2rem]">
             <div className="w-full flex justify-between items-center text-md font-medium p-[1rem]">
                 <p>👋 Hello, <span className="font-semibold text-blue-400">{userName}</span></p>
                 <div className="sm:flex hidden flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -606,7 +475,7 @@ const Room = () => {
                 </button>
             </div>
 
-            <div className="absolute bottom-[1rem] w-full text-center text-white font-semibold">Made by Abhiram T</div>
+            <div className="relative w-full py-[1rem] text-center text-white font-semibold">Made by Abhiram T</div>
         </div>
     )
 }
