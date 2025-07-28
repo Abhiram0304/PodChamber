@@ -59,8 +59,9 @@ server.listen(3000, () => {
 cron.schedule("*/1 * * * *", async (): Promise<void> => {
   try{
     console.log("Running internal cron job: pinging POST /deleteOldVideoCronJob");
-
-    const response = await axios.post<CleanupResponse>(
+    const url = `${process.env.SERVER_BASE_URL}/api/deleteOldVideoCronJob`;
+    console.log("URL", url);
+    const response = await axios.post(
       `${process.env.SERVER_BASE_URL}/api/deleteOldVideoCronJob`,
       { secretKey: process.env.SECRET_KEY }
     );
