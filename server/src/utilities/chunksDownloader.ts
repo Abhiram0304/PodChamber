@@ -9,9 +9,9 @@ export const downloadChunksToLocal = async (sessionId: string, userName: string,
     const localPaths: string[] = [];
 
     for(let i = 0; i < urls.length; i++){
-        const res = await axios.get(urls[i], { responseType: "arraybuffer" });
+        const res = await axios.get<ArrayBuffer>(urls[i], { responseType: "arraybuffer" });
         const localPath = path.join(folder, `chunk-${i.toString().padStart(4, "0")}.webm`);
-        await fs.writeFile(localPath, res.data);
+        await fs.writeFile(localPath, Buffer.from(res.data));        
         localPaths.push(localPath);
     }
 

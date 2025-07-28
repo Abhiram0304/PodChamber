@@ -6,7 +6,6 @@ import videoRoutes from './routes/videoRoutes'
 import cors from 'cors';
 import cron from "node-cron";
 import axios from "axios";
-import type { AxiosResponse } from "axios/index";
 
 interface CleanupResponse {
   success: boolean;
