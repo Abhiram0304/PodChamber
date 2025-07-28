@@ -202,9 +202,6 @@ export const deleteOldVideoCronJob = async (req: Request, res: Response) => {
     const videoChunks = await listAllObjects(bucket, "video-recordings/");
     const mergedVideos = await listAllObjects(bucket, "merged-videos/");
 
-    console.log("VIDEO CHUNKS", videoChunks);
-    console.log("MERGED", mergedVideos);
-
     const allObjects = [...videoChunks, ...mergedVideos];
     
     for(const obj of allObjects){
