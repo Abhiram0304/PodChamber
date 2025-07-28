@@ -32,7 +32,6 @@ const Recordings = () => {
             );
             setChunksData(formattedData);
         }else{
-            console.log("FDFD");
             toast.error("Something went wrong, ");
         }
     }

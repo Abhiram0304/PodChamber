@@ -62,13 +62,6 @@ const Room = () => {
     }, [audioMuted, videoMuted]);
 
     const handleRemoteTrack = (event: RTCTrackEvent) => {
-        event.track.onunmute = () => {
-            console.log(`${event.track.kind} track is now unmuted (media flowing)`);
-        };
-
-        event.track.onmute = () => {
-            console.log(`${event.track.kind} track is muted (no media flowing)`);
-        };
         if(!remoteVideoRef.current) return;
 
         if(!remoteMediaStreamRef.current) {
@@ -84,12 +77,6 @@ const Room = () => {
 
 
         remoteVideoRef.current.play()
-        //     .then(() => {
-        //         console.log("Remote video started playing");
-        //     })
-        //     .catch((err) => {
-        //         console.error("Remote video play error:", err);
-        //     });
     };
 
     const getMedia = async () => {
@@ -98,13 +85,6 @@ const Room = () => {
             const audioTrack = stream.getAudioTracks()[0];
             localAudioTrackRef.current = audioTrack;
             localVideoTrackRef.current = videoTrack;
-
-            videoTrack.onmute = () => {
-                console.log("Local video track is muted");
-            }
-            videoTrack.onunmute = () => {
-                console.log("Local video track is muted");
-            }
 
             setLocalMediaStream(stream);
 
@@ -164,7 +144,6 @@ const Room = () => {
         socket.emit("join-room", {roomId, userName});
 
         socket.on("send-offer", async ({ roomId }: { roomId: string }) => {
-            console.log("I am the offerer. Creating peer connection...");
             const pc = new RTCPeerConnection(rtcConfig);
             peerConnectionRef.current = pc;
 
@@ -185,7 +164,6 @@ const Room = () => {
         });
 
         socket.on("offer", async ({ remoteSdp, roomId }: { remoteSdp: RTCSessionDescriptionInit, roomId: string }) => {
-            console.log("I am the answerer. Creating peer connection...");
             const pc = new RTCPeerConnection(rtcConfig);
             peerConnectionRef.current = pc;
 
@@ -268,6 +246,7 @@ const Room = () => {
             recorderRef.current?.stop();
             setRecordingOn(false);
             setRecordingStatusText("Start Recording"); 
+            toast("Please wait atleast 5 mins before Ending the call, so that complete video chunks on your device are uploaded to Cloud storage.")
         });
 
         socket.on("recording-error", ({ message }: { message: string }) => {

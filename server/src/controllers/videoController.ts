@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { DeleteObjectsCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectsCommand, ListObjectsV2Command, S3Client, _Object } from "@aws-sdk/client-s3";
 import fs from "fs/promises";
 import path from "path";
 import { tmpdir } from "os";
@@ -184,7 +184,7 @@ export const getCompleteLayoutVideo = async (req: Request, res: Response) => {
 
 export const deleteOldVideoCronJob = async (req: Request, res: Response) => {
   try{
-    const {secretKey} = req.body;
+    const { secretKey } = req.body;
     if(secretKey !== process.env.SECRET_KEY){
       res.status(403).json({
         success: false,
@@ -193,74 +193,44 @@ export const deleteOldVideoCronJob = async (req: Request, res: Response) => {
       return;
     }
 
-    const now = Date.now();
     const bucket = process.env.S3_BUCKET_NAME!;
     const THRESHOLD_MS = 24 * 60 * 60 * 1000;
-    const cutoffTime = now - THRESHOLD_MS;
+    const cutoffTime = Date.now() - THRESHOLD_MS;
 
     const objectsToDelete: { Key: string }[] = [];
 
-    const videoChunksResult = await s3.send(new ListObjectsV2Command({
-      Bucket: bucket,
-      Prefix: "video-recordings/",
-    }));
+    const videoChunks = await listAllObjects(bucket, "video-recordings/");
+    const mergedVideos = await listAllObjects(bucket, "merged-videos/");
 
-    if(videoChunksResult.Contents){
-      for(const obj of videoChunksResult.Contents){
-        const key = obj.Key!;
-        const match = key.match(/^video-recordings\/(.+?)\/.+/);
-        if(!match) continue;
-
-        const sessionId = match[1]; 
-        const parts = sessionId.split("-");
-        if(parts.length < 3) continue;
-
-        const timestamp = parseInt(parts[1]);
-        if(isNaN(timestamp)) continue;
-
-        if(timestamp < cutoffTime){
-          objectsToDelete.push({ Key: key });
-        }
-      }
-    }
-
-    const mergedVideosResult = await s3.send(new ListObjectsV2Command({
-      Bucket: bucket,
-      Prefix: "merged-videos/",
-    }));
-
-    if(mergedVideosResult.Contents){
-      for(const obj of mergedVideosResult.Contents){
-        const key = obj.Key!;
-        const match = key.match(/^merged-videos\/session-(\d+)\.mp4$/);
-        if(!match) continue;
-
-        const timestamp = parseInt(match[1]);
-        if(isNaN(timestamp)) continue;
-
-        if(timestamp < cutoffTime) {
-          objectsToDelete.push({ Key: key });
-        }
+    const allObjects = [...videoChunks, ...mergedVideos];
+    
+    for(const obj of allObjects){
+      if(obj.Key && obj.LastModified && obj.LastModified.getTime() < cutoffTime){
+        objectsToDelete.push({ Key: obj.Key });
       }
     }
 
     if(objectsToDelete.length > 0){
-      await s3.send(new DeleteObjectsCommand({
-        Bucket: bucket,
-        Delete: {
-          Objects: objectsToDelete,
-          Quiet: true,
-        },
-      }));
+      for(let i = 0; i < objectsToDelete.length; i += 1000){
+        const chunk = objectsToDelete.slice(i, i + 1000);
+        await s3.send(new DeleteObjectsCommand({
+          Bucket: bucket,
+          Delete: {
+            Objects: chunk,
+            Quiet: true,
+          },
+        }));
+      }
     }
 
     res.status(200).json({
       success: true,
       deletedCount: objectsToDelete.length,
-      message: "Old session videos cleaned up.",
+      message: "Old session videos cleaned up successfully.",
     });
     return;
-  }catch(err){
+
+  } catch (err) {
     console.error("Error cleaning up old sessions:", err);
     res.status(500).json({
       success: false,
@@ -269,3 +239,26 @@ export const deleteOldVideoCronJob = async (req: Request, res: Response) => {
     return;
   }
 };
+
+async function listAllObjects(bucket: string, prefix: string): Promise<_Object[]> {
+  const allObjects: _Object[] = [];
+  let isTruncated = true;
+  let continuationToken: string | undefined;
+
+  while(isTruncated){
+    const command = new ListObjectsV2Command({
+      Bucket: bucket,
+      Prefix: prefix,
+      ContinuationToken: continuationToken,
+    });
+    const result = await s3.send(command);
+
+    if(result.Contents){
+      allObjects.push(...result.Contents);
+    }
+
+    isTruncated = !!result.IsTruncated;
+    continuationToken = result.NextContinuationToken;
+  }
+  return allObjects;
+}

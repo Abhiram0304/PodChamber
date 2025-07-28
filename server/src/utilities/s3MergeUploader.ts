@@ -11,9 +11,6 @@ export const s3MergeUploader = async(filePath: string, key: string): Promise<str
     ContentType: "video/mp4",
   });
 
-  console.log("UPLOADING");
-
   await s3Client.send(command);
-  console.log("AFTER UPLOADING");
   return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 }

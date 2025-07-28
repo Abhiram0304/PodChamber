@@ -42,7 +42,6 @@ export class S3PresignedUploader {
               throw new Error(`Upload failed with status ${res.status}`);
             }
 
-            console.log("Chunk uploaded to:", response.finalUrl);
             resolve(response.finalUrl);
           }catch(err){
             console.error("Upload failed:", err);

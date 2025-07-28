@@ -42,7 +42,6 @@ export class UserManager {
             }
 
             const sessionId = `${roomId}-${Date.now()}-${uuidv4()}`;
-            console.log(`Recording session started: ${sessionId}`);
 
             room.users.forEach((user) => {
                 user.socket.emit("start-recording-at", {startTime, sessionId});
