@@ -64,7 +64,7 @@ const Room = () => {
     const handleRemoteTrack = (event: RTCTrackEvent) => {
         if(!remoteVideoRef.current) return;
 
-        if(!remoteMediaStreamRef.current) {
+        if(!remoteMediaStreamRef.current){
             remoteMediaStreamRef.current = new MediaStream();
         }
 
@@ -147,13 +147,13 @@ const Room = () => {
             const pc = new RTCPeerConnection(rtcConfig);
             peerConnectionRef.current = pc;
 
-            if (localMediaStream) {
+            if(localMediaStream){
                 localMediaStream.getTracks().forEach(track => pc.addTrack(track, localMediaStream));
             }
 
             pc.ontrack = handleRemoteTrack;
             pc.onicecandidate = (event) => {
-                if (event.candidate) {
+                if(event.candidate){
                     socket.emit("add-ice-candidate", { candidate: event.candidate, roomId });
                 }
             };
@@ -167,13 +167,13 @@ const Room = () => {
             const pc = new RTCPeerConnection(rtcConfig);
             peerConnectionRef.current = pc;
 
-            if (localMediaStream) {
+            if(localMediaStream){
                 localMediaStream.getTracks().forEach(track => pc.addTrack(track, localMediaStream));
             }
 
             pc.ontrack = handleRemoteTrack;
             pc.onicecandidate = (event) => {
-                if (event.candidate) {
+                if(event.candidate){
                     socket.emit("add-ice-candidate", { candidate: event.candidate, roomId });
                 }
             };
@@ -190,7 +190,7 @@ const Room = () => {
 
         socket.on("answer", async ({ remoteSdp }: { remoteSdp: RTCSessionDescriptionInit }) => {
             const pc = peerConnectionRef.current;
-            if (pc) {
+            if(pc){
                 await pc.setRemoteDescription(new RTCSessionDescription(remoteSdp));
                 iceCandidatesBufferRef.current.forEach(candidate => pc.addIceCandidate(candidate));
                 iceCandidatesBufferRef.current = [];
@@ -199,9 +199,9 @@ const Room = () => {
 
         socket.on("add-ice-candidate", ({ candidate }: { candidate: RTCIceCandidateInit }) => {
             const pc = peerConnectionRef.current;
-            if (pc?.remoteDescription) {
+            if(pc?.remoteDescription){
                 pc.addIceCandidate(candidate);
-            } else {
+            }else{
                 iceCandidatesBufferRef.current.push(candidate);
             }
         });
@@ -209,7 +209,7 @@ const Room = () => {
         socket.on("confirm-end-call", () => {
             setRemoteUserName(null);
             setSessionId(null);
-            if (peerConnectionRef.current) {
+            if(peerConnectionRef.current){
                 peerConnectionRef.current.close();
                 peerConnectionRef.current = null;
             }
@@ -393,7 +393,6 @@ const Room = () => {
                     )}
                 </div>
             </div>
-
 
             <div className="flex items-center justify-center gap-4 py-[0.5rem] px-[1rem] rounded-[2rem] bg-gray-900">
                 <button

@@ -7,12 +7,6 @@ import cors from 'cors';
 import cron from "node-cron";
 import axios from "axios";
 
-interface CleanupResponse {
-  success: boolean;
-  deletedCount?: number;
-  message: string;
-}
-
 const app = express();
 app.use(express.json());
 
@@ -53,10 +47,10 @@ io.on("connection", (socket: Socket) => {
 });
 
 server.listen(3000, () => {
-  console.log("Server listening on http://localhost:3000");
+  console.log("Server running");
 });
 
-cron.schedule("*/1 * * * *", async (): Promise<void> => {
+cron.schedule("*/10 * * * *", async (): Promise<void> => {
   try{
     console.log("Running internal cron job: pinging POST /deleteOldVideoCronJob");
     const url = `${process.env.SERVER_BASE_URL}/api/deleteOldVideoCronJob`;

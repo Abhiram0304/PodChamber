@@ -10,7 +10,7 @@ export interface RecorderConfig {
 export default function createMediaRecorder(
   stream: MediaStream,
   onChunk: (blob: Blob) => void,
-  chunkInterval = 10000, // 1 sec
+  chunkInterval = 10000, // 10 sec
   config?: RecorderConfig
 ) {
   const recorder = new MediaRecorder(stream, { 
