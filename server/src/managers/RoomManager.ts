@@ -25,9 +25,10 @@ export class RoomManager {
             firstUser.socket.emit("set-remote-user-name", {userName: secondUserName});
             secondUser.socket.emit("set-remote-user-name", {userName: firstUserName});
             
-            setTimeout(() => {
-                firstUser.socket.emit("send-offer", { roomId });
-            }, 2000);
+            // setTimeout(() => {
+            //     firstUser.socket.emit("send-offer", { roomId });
+            // }, 2000);
+            firstUser.socket.emit("send-offer", { roomId });
         }
     }
 
@@ -62,12 +63,17 @@ export class RoomManager {
         receiverUser?.socket.emit("answer", {remoteSdp: sdp, roomId});
     }
 
-    public onIceCandidate(roomId: string, senderSocketId: string, candidate: any, type: "sender" | "receiver"): void {
-        const room = this.rooms.get(roomId);
-        if(!room) return;
+    // public onIceCandidate(roomId: string, senderSocketId: string, candidate: any, type: "sender" | "receiver"): void {
+    //     const room = this.rooms.get(roomId);
+    //     if(!room) return;
         
+    //     const receiverUser = this.getOtherUser(roomId, senderSocketId);
+    //     receiverUser?.socket.emit("add-ice-candidate", {candidate, type, roomId});
+    // }
+
+    public onIceCandidate(roomId: string, senderSocketId: string, candidate: any): void {
         const receiverUser = this.getOtherUser(roomId, senderSocketId);
-        receiverUser?.socket.emit("add-ice-candidate", {candidate, type, roomId});
+        receiverUser?.socket.emit("add-ice-candidate", { candidate, roomId });
     }
 
     public getRoomById(roomId: string): Room | undefined {

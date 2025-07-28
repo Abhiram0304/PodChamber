@@ -26,8 +26,12 @@ export class UserManager {
             this.roomManager.onAnswer(roomId, sdp, socket.id);
         });
 
-        socket.on("add-ice-candidate", ({candidate, type, roomId} : {candidate: any, type: "sender" | "receiver", roomId: string}) => {
-            this.roomManager.onIceCandidate(roomId, socket.id, candidate, type);
+        // socket.on("add-ice-candidate", ({candidate, type, roomId} : {candidate: any, type: "sender" | "receiver", roomId: string}) => {
+        //     this.roomManager.onIceCandidate(roomId, socket.id, candidate, type);
+        // });
+
+        socket.on("add-ice-candidate", ({ candidate, roomId }: { candidate: any, roomId: string }) => {
+            this.roomManager.onIceCandidate(roomId, socket.id, candidate);
         });
 
         socket.on("prepare-for-recording", ({roomId, startTime} : {roomId: string, startTime: number}) => {
@@ -37,7 +41,6 @@ export class UserManager {
             if(!room) return;
 
             if(userCount < 2){
-                console.log("EMIT EROR");
                 socket.emit("recording-error", {message: "Less than 2 users in the PodCell"});
                 return;
             }
@@ -75,7 +78,6 @@ export class UserManager {
             }
         )
     }
-
 
     public joinRoom(roomId: string, userName: string, socket: Socket) : void {
         this.users.push({socket, userName});
